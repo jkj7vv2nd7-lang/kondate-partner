@@ -12,19 +12,21 @@
 <meta property="og:image" content="icon.png">
 <style>
   :root{
-    --bg:#fff8ec; --card:#ffffff; --ink:#43302a; --sub:#8a7163;
-    --accent:#e2571e; --accent2:#f2a03d; --green:#4d9e57; --line:#f0ddc4;
-    --chip:#fdeeda; --bad:#d64545;
+    --bg:#f6f1e7; --card:#fffdf8; --ink:#37312a; --sub:#8b7f6e;
+    --accent:#14655a; --accent2:#e07840; --green:#3e8e5a; --line:#e6dbc4;
+    --chip:#fdeeda; --bad:#c74440;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   body{margin:0; font-family:"Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",sans-serif; background:var(--bg); color:var(--ink);}
-  header{background:linear-gradient(135deg,#e2571e,#f2a03d); color:#fff; padding:18px 16px 14px; text-align:center;}
+  header{padding:0; line-height:0; background:#0f4f47;}
+  header img{width:100%; height:auto; display:block;}
   header h1{margin:0; font-size:24px; letter-spacing:.04em;}
   header p{margin:6px 0 0; font-size:13px; opacity:.92;}
   .sr-only{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0);}
   nav.tabs{display:flex; gap:6px; padding:10px 10px 0;}
   nav.tabs button{flex:1; padding:10px 2px; border:2px solid var(--line); background:#fff; border-radius:12px 12px 0 0; font-size:14px; font-weight:700; color:var(--sub); cursor:pointer;}
   nav.tabs button.on{background:var(--card); color:var(--accent); border-bottom-color:var(--card);}
+  .slot.main{background:#c65a2e;}
   main{padding:12px 12px 40px; max-width:640px; margin:0 auto;}
   .screen{display:none;}
   .screen.on{display:block;}
@@ -33,16 +35,16 @@
   .summary .big{font-size:20px; font-weight:800;}
   .ok{color:var(--green); font-weight:700;}
   .over{color:var(--bad); font-weight:700;}
-  #genBtn{display:block; width:100%; padding:16px; border:none; border-radius:16px; background:linear-gradient(135deg,#e2571e,#f2a03d); color:#fff; font-size:18px; font-weight:800; cursor:pointer; box-shadow:0 4px 0 #b23f14; margin-bottom:14px;}
-  #genBtn:active{transform:translateY(2px); box-shadow:0 2px 0 #b23f14;}
+  #genBtn{display:block; width:100%; padding:16px; border:none; border-radius:16px; background:linear-gradient(135deg,#e07840,#cf5a26); color:#fff; font-size:18px; font-weight:800; cursor:pointer; box-shadow:0 4px 0 #9c3f16; margin-bottom:14px;}
+  #genBtn:active{transform:translateY(2px); box-shadow:0 2px 0 #9c3f16;}
   .day{background:var(--card); border:2px solid var(--line); border-radius:14px; padding:12px 14px; margin-bottom:12px;}
   .day h3{margin:0 0 8px; font-size:16px; display:flex; justify-content:space-between; align-items:baseline;}
   .day h3 .meta{font-size:12px; color:var(--sub); font-weight:400;}
   .dish{display:flex; align-items:center; gap:8px; padding:7px 0; border-top:1px dashed var(--line);}
   .dish:first-of-type{border-top:none;}
-  .dish .slot{flex:0 0 40px; font-size:11px; font-weight:700; color:#fff; background:var(--accent2); border-radius:8px; text-align:center; padding:3px 0;}
-  .dish .slot.side{background:#7ab648;}
-  .dish .slot.soup{background:#4d8ec4;}
+  .dish .slot{flex:0 0 40px; font-size:11px; font-weight:700; color:#fff; background:#c65a2e; border-radius:8px; text-align:center; padding:3px 0;}
+  .dish .slot.side{background:#6f9e57;}
+  .dish .slot.soup{background:#4d7ea8;}
   .dish .name{flex:1; font-size:15px; font-weight:600; cursor:pointer;}
   .dish .name small{display:block; font-size:11px; color:var(--sub); font-weight:400;}
   .dish .chg{flex:0 0 auto; border:2px solid var(--line); background:#fff; border-radius:10px; padding:6px 10px; font-size:12px; font-weight:700; color:var(--accent); cursor:pointer;}
@@ -61,18 +63,25 @@
   .chip.on{background:var(--accent); border-color:var(--accent); color:#fff; font-weight:700;}
   .homebox{background:var(--card); border:2px solid var(--line); border-radius:14px; padding:12px 14px; margin-bottom:12px;}
   .homebox b{font-size:14px;}
-  .remake{font-size:12px; color:#7a5a10; background:#fdf3d0; border-radius:8px; padding:6px 9px; margin-top:8px; line-height:1.6;}
+  .remake{font-size:12px; color:#6d5510; background:#f7ecd2; border-radius:8px; padding:6px 9px; margin-top:8px; line-height:1.6;}
   .shop-item label{display:flex; justify-content:space-between; width:100%; cursor:pointer;}
   .shop-item input{width:20px; height:20px; margin-right:10px; accent-color:var(--green);}
   .shop-item.done{opacity:.45;}
   .shop-item.done .nm{text-decoration:line-through;}
-  .dummy{background:#f4ede1; border:2px dashed #d8c6a8; border-radius:14px; padding:22px 16px; text-align:center; color:var(--sub);}
+  .fridge-item{display:flex; gap:10px; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:10px; margin-bottom:10px; align-items:center;}
+  .fridge-item img{width:74px; height:74px; object-fit:cover; border-radius:10px; flex:0 0 auto;}
+  .fridge-item .fi-body{flex:1; font-size:14px;}
+  .fridge-item .fi-name{font-weight:800;}
+  .fridge-item .fi-memo{font-size:12px; color:var(--sub);}
+  .fridge-item .fi-del{border:2px solid var(--line); background:#fff; border-radius:10px; padding:7px 10px; font-size:12px; font-weight:700; color:var(--bad); cursor:pointer;}
+  #fridgeAddBtn{display:block; width:100%; padding:14px; border:none; border-radius:14px; background:var(--accent); color:#fff; font-size:16px; font-weight:800; cursor:pointer; margin-bottom:12px;}
+  .dummy{background:#efe9db; border:2px dashed #cfc0a0; border-radius:14px; padding:22px 16px; text-align:center; color:var(--sub);}
   .field{margin-bottom:14px;}
   .field label{display:block; font-size:13px; font-weight:700; margin-bottom:6px;}
   .field input[type=number], .field input[type=text], .field select{width:100%; padding:11px; font-size:16px; border:2px solid var(--line); border-radius:10px; background:#fff; color:var(--ink);}
   .field .two{display:flex; gap:8px;}
   .field .two > *{flex:1;}
-  #saveSetBtn{display:block; width:100%; padding:14px; border:none; border-radius:14px; background:var(--green); color:#fff; font-size:16px; font-weight:800; cursor:pointer;}
+  #saveSetBtn{display:block; width:100%; padding:14px; border:none; border-radius:14px; background:var(--accent); color:#fff; font-size:16px; font-weight:800; cursor:pointer;}
   .modal-bg{position:fixed; inset:0; background:rgba(60,35,20,.45); display:none; z-index:50;}
   .modal-bg.open{display:block;}
   .modal{position:absolute; left:0; right:0; bottom:0; max-height:82vh; overflow:auto; background:#fff; border-radius:20px 20px 0 0; padding:18px 16px 30px;}
@@ -91,8 +100,8 @@
 </head>
 <body>
 <header>
-  <h1>🍳 わが家の献立パートナー</h1>
-  <p>ボタンひとつで、今週の夕食5回分が完成します</p>
+  <h1 class="sr-only">わが家の献立パートナー</h1>
+  <img src="title.gif" alt="わが家の献立パートナー ― ボタンひとつで、今週の夕食5回分が完成します">
 </header>
 
 <nav class="tabs">
@@ -123,16 +132,17 @@
     <p class="note">※ しょうゆ・味噌・油などの調味料と、お米は常備品として数えていません。分量は設定人数に合わせた1週間分の合計です。</p>
   </section>
 
-  <!-- 冷蔵庫（第1段階では仮の置き場） -->
+  <!-- 冷蔵庫：在庫メモ（写真登録） -->
   <section class="screen" id="scr-fridge">
-    <div class="dummy">
-      <p style="font-size:34px; margin:0;">🧊</p>
-      <p><b>冷蔵庫の在庫メモ</b></p>
-      <p>この画面は準備中です。第2段階で、冷蔵庫にある食材を登録して、献立づくりに活かせるようにする予定です。</p>
-      <p style="text-align:left; max-width:320px; margin:14px auto 0; line-height:2;">
-        （表示イメージ）<br>・白菜 …… 1/4個<br>・卵 …… 4個<br>・鶏もも肉 …… 300g
-      </p>
+    <div class="summary">
+      <div class="row"><span>冷蔵庫の在庫メモ</span><span class="big" id="fridgeCount"></span></div>
+      <p class="note" style="margin:4px 0 0;">写真を撮って（または選んで）、食材名を付けて登録します。写真から名前を自動で読み取ることはしませんので、名前は選んでください。登録した食材は、献立づくりの「家にある食材」として優先されます。</p>
     </div>
+    <input type="file" id="fridgePhoto" accept="image/*" style="display:none">
+    <button id="fridgeAddBtn" onclick="document.getElementById('fridgePhoto').click()">📷 写真で在庫を登録する</button>
+    <div id="fridgePending"></div>
+    <div id="fridgeList"></div>
+    <p class="note">写真は小さく圧縮して、この端末の中にだけ保存します（サーバーには送りません）。登録は最大12件までです。</p>
   </section>
 
   <!-- 設定 -->
@@ -585,6 +595,7 @@ function showTab(name){
     $('tab-' + t).classList.toggle('on', t === name);
   });
   if(name === 'shop') renderShop();
+  if(name === 'fridge') renderFridge();
   window.scrollTo(0, 0);
 }
 function badges(d){
@@ -718,6 +729,89 @@ function toggleHome(n){
   renderHomeChips(); tap();
 }
 
+/* ---------- 冷蔵庫の在庫（写真登録） ---------- */
+const FRIDGE_KEY = 'kondate-fridge-v1';
+let fridgeItems = [];
+try{ fridgeItems = JSON.parse(localStorage.getItem(FRIDGE_KEY)) || []; }catch(e){}
+let pendingPhoto = null, pendingName = '';
+function saveFridge(){
+  try{ localStorage.setItem(FRIDGE_KEY, JSON.stringify(fridgeItems)); return true; }
+  catch(e){ return false; }
+}
+function renderFridge(){
+  $('fridgeCount').textContent = fridgeItems.length + ' 件';
+  $('fridgeList').innerHTML = fridgeItems.length ? fridgeItems.map(it =>
+    '<div class="fridge-item"><img src="' + it.img + '" alt="">' +
+    '<div class="fi-body"><div class="fi-name">' + it.name + '</div>' +
+    (it.memo ? '<div class="fi-memo">' + it.memo + '</div>' : '') +
+    '<div class="fi-memo">「家にある食材」に登録済み</div></div>' +
+    '<button class="fi-del" onclick="deleteFridge(' + it.id + ')">削除</button></div>').join('')
+    : '<div class="dummy"><p style="font-size:30px; margin:0;">🧊</p><p>まだ登録がありません。<br>冷蔵庫の食材を写真で残しておくと、献立づくりに活かせます。</p></div>';
+}
+function deleteFridge(id){
+  fridgeItems = fridgeItems.filter(it => it.id !== id);
+  saveFridge(); renderFridge(); tap();
+}
+$('fridgePhoto').addEventListener('change', ev => {
+  const f = ev.target.files && ev.target.files[0];
+  ev.target.value = '';
+  if(!f) return;
+  if(fridgeItems.length >= 12){ alert('登録は最大12件までです。古いものを削除してから追加してください。'); return; }
+  const img = new Image();
+  img.onload = () => {
+    const max = 480;
+    const sc = Math.min(1, max / Math.max(img.width, img.height));
+    const cv = document.createElement('canvas');
+    cv.width = Math.round(img.width * sc); cv.height = Math.round(img.height * sc);
+    cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+    URL.revokeObjectURL(img.src);
+    pendingPhoto = cv.toDataURL('image/jpeg', 0.72);
+    pendingName = '';
+    renderPending();
+  };
+  img.onerror = () => alert('写真を読み込めませんでした。');
+  img.src = URL.createObjectURL(f);
+});
+function renderPending(){
+  if(!pendingPhoto){ $('fridgePending').innerHTML = ''; return; }
+  $('fridgePending').innerHTML = '<div class="homebox"><b>この写真の食材は？</b>' +
+    '<img src="' + pendingPhoto + '" style="width:100%; border-radius:10px; margin:8px 0;" alt="">' +
+    '<div class="chips">' + HOME_CANDIDATES.map(n =>
+      '<button class="chip' + (pendingName === n ? ' on' : '') + '" onclick="pickPending(\'' + n + '\')">' + n + '</button>').join('') + '</div>' +
+    '<div class="field" style="margin-top:10px;"><label>チップにない食材は名前を入力</label>' +
+    '<input type="text" id="pendingFree" placeholder="例：れんこん"></div>' +
+    '<div class="field"><label>量のメモ（任意）</label>' +
+    '<input type="text" id="pendingMemo" placeholder="例：半分くらい、2個"></div>' +
+    '<div class="dayfoot"><button style="color:var(--accent); border-color:var(--accent);" onclick="registerFridge()">登録する</button>' +
+    '<button onclick="cancelPending()">やめる</button></div></div>';
+}
+function pickPending(n){ pendingName = n; const f = $('pendingFree'); if(f) f.value = ''; renderPendingKeep(); }
+function renderPendingKeep(){
+  // チップの選択表示だけ更新（入力中のメモを消さない）
+  document.querySelectorAll('#fridgePending .chip').forEach(c => c.classList.toggle('on', c.textContent === pendingName));
+  tap();
+}
+function cancelPending(){ pendingPhoto = null; pendingName = ''; renderPending(); }
+function registerFridge(){
+  const free = ($('pendingFree').value || '').trim();
+  const name = free || pendingName;
+  if(!name){ alert('食材を選ぶか、名前を入力してください。'); return; }
+  const memo = ($('pendingMemo').value || '').trim();
+  fridgeItems.unshift({id: Date.now(), name, memo, img: pendingPhoto});
+  if(!saveFridge()){
+    fridgeItems.shift();
+    alert('保存できませんでした。写真の容量がいっぱいのようです。古い登録を削除してからお試しください。');
+    return;
+  }
+  if(HOME_CANDIDATES.includes(name) && !homeIngs.includes(name)){
+    homeIngs.push(name);
+    try{ localStorage.setItem(HOME_KEY, JSON.stringify(homeIngs)); }catch(e){}
+    renderHomeChips();
+  }
+  pendingPhoto = null; pendingName = '';
+  renderPending(); renderFridge(); fanfare();
+}
+
 /* ---------- 設定 ---------- */
 function fillSettings(){
   $('set-people').value = String(S.people);
@@ -783,6 +877,7 @@ function confettiBurst(){
 /* ---------- 起動 ---------- */
 fillSettings();
 renderHomeChips();
+renderFridge();
 renderAll();
 </script>
 </body>
