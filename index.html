@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>わが家の献立パートナー</title>
+<meta name="description" content="2人暮らし向け。ボタンひとつで、わが家に合った夕食5回分の献立が完成するアプリです。">
+<link rel="icon" href="icon.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta property="og:title" content="わが家の献立パートナー">
+<meta property="og:description" content="今週の献立を作るボタンを押すだけで、予算と時間に合った夕食5回分が完成します。">
+<meta property="og:image" content="icon.png">
+<style>
+  :root{
+    --bg:#fff8ec; --card:#ffffff; --ink:#43302a; --sub:#8a7163;
+    --accent:#e2571e; --accent2:#f2a03d; --green:#4d9e57; --line:#f0ddc4;
+    --chip:#fdeeda; --bad:#d64545;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  body{margin:0; font-family:"Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",sans-serif; background:var(--bg); color:var(--ink);}
+  header{background:linear-gradient(135deg,#e2571e,#f2a03d); color:#fff; padding:18px 16px 14px; text-align:center;}
+  header h1{margin:0; font-size:24px; letter-spacing:.04em;}
+  header p{margin:6px 0 0; font-size:13px; opacity:.92;}
+  .sr-only{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0);}
+  nav.tabs{display:flex; gap:6px; padding:10px 10px 0;}
+  nav.tabs button{flex:1; padding:10px 2px; border:2px solid var(--line); background:#fff; border-radius:12px 12px 0 0; font-size:14px; font-weight:700; color:var(--sub); cursor:pointer;}
+  nav.tabs button.on{background:var(--card); color:var(--accent); border-bottom-color:var(--card);}
+  main{padding:12px 12px 40px; max-width:640px; margin:0 auto;}
+  .screen{display:none;}
+  .screen.on{display:block;}
+  .summary{background:var(--card); border:2px solid var(--line); border-radius:14px; padding:12px 14px; margin-bottom:12px;}
+  .summary .row{display:flex; justify-content:space-between; align-items:baseline; margin:3px 0; font-size:14px;}
+  .summary .big{font-size:20px; font-weight:800;}
+  .ok{color:var(--green); font-weight:700;}
+  .over{color:var(--bad); font-weight:700;}
+  #genBtn{display:block; width:100%; padding:16px; border:none; border-radius:16px; background:linear-gradient(135deg,#e2571e,#f2a03d); color:#fff; font-size:18px; font-weight:800; cursor:pointer; box-shadow:0 4px 0 #b23f14; margin-bottom:14px;}
+  #genBtn:active{transform:translateY(2px); box-shadow:0 2px 0 #b23f14;}
+  .day{background:var(--card); border:2px solid var(--line); border-radius:14px; padding:12px 14px; margin-bottom:12px;}
+  .day h3{margin:0 0 8px; font-size:16px; display:flex; justify-content:space-between; align-items:baseline;}
+  .day h3 .meta{font-size:12px; color:var(--sub); font-weight:400;}
+  .dish{display:flex; align-items:center; gap:8px; padding:7px 0; border-top:1px dashed var(--line);}
+  .dish:first-of-type{border-top:none;}
+  .dish .slot{flex:0 0 40px; font-size:11px; font-weight:700; color:#fff; background:var(--accent2); border-radius:8px; text-align:center; padding:3px 0;}
+  .dish .slot.side{background:#7ab648;}
+  .dish .slot.soup{background:#4d8ec4;}
+  .dish .name{flex:1; font-size:15px; font-weight:600; cursor:pointer;}
+  .dish .name small{display:block; font-size:11px; color:var(--sub); font-weight:400;}
+  .dish .chg{flex:0 0 auto; border:2px solid var(--line); background:#fff; border-radius:10px; padding:6px 10px; font-size:12px; font-weight:700; color:var(--accent); cursor:pointer;}
+  .badge{display:inline-block; font-size:10px; font-weight:700; padding:1px 6px; border-radius:99px; background:var(--chip); color:#a35b14; margin-left:4px; vertical-align:1px;}
+  .badge.reuse{background:#e3f3df; color:#39703c;}
+  .dayfoot{display:flex; gap:8px; margin-top:10px;}
+  .dayfoot button{flex:1; padding:9px; border-radius:10px; border:2px solid var(--line); background:#fff; font-size:13px; font-weight:700; cursor:pointer; color:var(--sub);}
+  .undecided{padding:14px 0 6px; text-align:center; color:var(--sub); font-size:14px;}
+  .undecided button{margin-top:10px; padding:12px 18px; border:none; border-radius:12px; background:var(--accent); color:#fff; font-size:15px; font-weight:800; cursor:pointer;}
+  .shop-cat{font-size:15px; font-weight:800; margin:16px 0 6px; color:var(--accent);}
+  .shop-item{display:flex; justify-content:space-between; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:9px 12px; margin-bottom:6px; font-size:14px;}
+  .shop-item .qty{font-weight:700;}
+  .note{font-size:12px; color:var(--sub); line-height:1.7;}
+  .chips{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 2px;}
+  .chip{border:2px solid var(--line); background:#fff; border-radius:99px; padding:6px 12px; font-size:13px; cursor:pointer;}
+  .chip.on{background:var(--accent); border-color:var(--accent); color:#fff; font-weight:700;}
+  .homebox{background:var(--card); border:2px solid var(--line); border-radius:14px; padding:12px 14px; margin-bottom:12px;}
+  .homebox b{font-size:14px;}
+  .remake{font-size:12px; color:#7a5a10; background:#fdf3d0; border-radius:8px; padding:6px 9px; margin-top:8px; line-height:1.6;}
+  .shop-item label{display:flex; justify-content:space-between; width:100%; cursor:pointer;}
+  .shop-item input{width:20px; height:20px; margin-right:10px; accent-color:var(--green);}
+  .shop-item.done{opacity:.45;}
+  .shop-item.done .nm{text-decoration:line-through;}
+  .dummy{background:#f4ede1; border:2px dashed #d8c6a8; border-radius:14px; padding:22px 16px; text-align:center; color:var(--sub);}
+  .field{margin-bottom:14px;}
+  .field label{display:block; font-size:13px; font-weight:700; margin-bottom:6px;}
+  .field input[type=number], .field input[type=text], .field select{width:100%; padding:11px; font-size:16px; border:2px solid var(--line); border-radius:10px; background:#fff; color:var(--ink);}
+  .field .two{display:flex; gap:8px;}
+  .field .two > *{flex:1;}
+  #saveSetBtn{display:block; width:100%; padding:14px; border:none; border-radius:14px; background:var(--green); color:#fff; font-size:16px; font-weight:800; cursor:pointer;}
+  .modal-bg{position:fixed; inset:0; background:rgba(60,35,20,.45); display:none; z-index:50;}
+  .modal-bg.open{display:block;}
+  .modal{position:absolute; left:0; right:0; bottom:0; max-height:82vh; overflow:auto; background:#fff; border-radius:20px 20px 0 0; padding:18px 16px 30px;}
+  .modal h3{margin:0 0 4px; font-size:18px;}
+  .modal h4{margin:16px 0 6px; font-size:14px; color:var(--accent);}
+  .modal p, .modal li{font-size:14px; line-height:1.75;}
+  .modal ul, .modal ol{margin:4px 0; padding-left:20px;}
+  .cand{display:flex; justify-content:space-between; align-items:center; width:100%; text-align:left; border:2px solid var(--line); background:#fff; border-radius:12px; padding:11px 12px; margin-bottom:8px; cursor:pointer; font-size:14px;}
+  .cand .cname{font-weight:700;}
+  .cand .cmeta{font-size:11px; color:var(--sub);}
+  .cand.cur{border-color:var(--accent); background:#fff4e8;}
+  .closeBtn{display:block; width:100%; margin-top:14px; padding:12px; border:none; border-radius:12px; background:#efe6d8; font-size:15px; font-weight:700; cursor:pointer;}
+  footer{padding:18px 16px 34px; text-align:center; font-size:12px; color:var(--sub); line-height:1.8;}
+  #confetti{position:fixed; inset:0; pointer-events:none; z-index:99;}
+</style>
+</head>
+<body>
+<header>
+  <h1>🍳 わが家の献立パートナー</h1>
+  <p>ボタンひとつで、今週の夕食5回分が完成します</p>
+</header>
+
+<nav class="tabs">
+  <button id="tab-week" class="on" onclick="showTab('week')">📅 献立</button>
+  <button id="tab-shop" onclick="showTab('shop')">🛒 買い物</button>
+  <button id="tab-fridge" onclick="showTab('fridge')">🧊 冷蔵庫</button>
+  <button id="tab-set" onclick="showTab('set')">⚙️ 設定</button>
+</nav>
+
+<main>
+  <!-- 献立 -->
+  <section class="screen on" id="scr-week">
+    <div class="summary" id="weekSummary"></div>
+    <div class="homebox">
+      <b>🧺 家にある食材があれば選んでください（任意）</b>
+      <p class="note" style="margin:4px 0 0;">選んだ食材を優先して使う献立にします。冷蔵庫に余りがちなものからどうぞ。</p>
+      <div class="chips" id="homeChips"></div>
+    </div>
+    <button id="genBtn" onclick="generateWeek(true)">✨ 今週の献立を作る</button>
+    <div id="days"></div>
+    <p class="note">料理名を押すと、材料と作り方が見られます。「変更」を押すと、その1品だけ候補から選び直せます。買い物リストと費用は自動で計算し直されます。</p>
+  </section>
+
+  <!-- 買い物リスト -->
+  <section class="screen" id="scr-shop">
+    <div class="summary" id="shopSummary"></div>
+    <div id="shopList"></div>
+    <p class="note">※ しょうゆ・味噌・油などの調味料と、お米は常備品として数えていません。分量は設定人数に合わせた1週間分の合計です。</p>
+  </section>
+
+  <!-- 冷蔵庫（第1段階では仮の置き場） -->
+  <section class="screen" id="scr-fridge">
+    <div class="dummy">
+      <p style="font-size:34px; margin:0;">🧊</p>
+      <p><b>冷蔵庫の在庫メモ</b></p>
+      <p>この画面は準備中です。第2段階で、冷蔵庫にある食材を登録して、献立づくりに活かせるようにする予定です。</p>
+      <p style="text-align:left; max-width:320px; margin:14px auto 0; line-height:2;">
+        （表示イメージ）<br>・白菜 …… 1/4個<br>・卵 …… 4個<br>・鶏もも肉 …… 300g
+      </p>
+    </div>
+  </section>
+
+  <!-- 設定 -->
+  <section class="screen" id="scr-set">
+    <div class="field">
+      <label>家族の人数</label>
+      <select id="set-people">
+        <option value="1">1人</option><option value="2">2人</option><option value="3">3人</option><option value="4">4人</option><option value="5">5人</option><option value="6">6人</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>週間夕食予算（5回分・円）</label>
+      <div class="two">
+        <input type="number" id="set-bmin" min="0" step="500" placeholder="下限">
+        <input type="number" id="set-bmax" min="0" step="500" placeholder="上限">
+      </div>
+    </div>
+    <div class="field">
+      <label>調理時間の上限</label>
+      <select id="set-time">
+        <option value="20">20分以内</option><option value="30">30分以内</option><option value="40">40分以内</option><option value="50">50分以内</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>料理の好み</label>
+      <select id="set-style">
+        <option value="wa">和食中心（洋食も時々）</option>
+        <option value="mix">和食・洋食 バランスよく</option>
+        <option value="yo">洋食も多め</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>優先順位（1位〜3位）</label>
+      <div class="two" style="flex-direction:column; display:flex;">
+        <select id="set-pri1"></select>
+        <select id="set-pri2"></select>
+        <select id="set-pri3"></select>
+      </div>
+    </div>
+    <div class="field">
+      <label>手抜きの日</label>
+      <select id="set-easy">
+        <option value="1">週に1回入れる（鍋もの・丼ものなど、洗い物の少ない日）</option>
+        <option value="0">入れない</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>使わない食材（カンマ区切り・料理名に含まれるものを除きます）</label>
+      <input type="text" id="set-ng" placeholder="例：さば, 納豆">
+    </div>
+    <button id="saveSetBtn" onclick="saveSettings()">設定を保存する</button>
+    <p class="note" style="margin-top:10px;">設定はこの端末の中にだけ保存されます（サーバーには送りません）。保存すると、今の献立は新しい設定で作り直せます。</p>
+  </section>
+</main>
+
+<footer>
+  わが家の献立パートナー<br>
+  費用と時間は目安です。食材の価格は店や季節で変わります。<br>
+  不具合が出るかもしれません。実際にご使用の際に不具合がありましたらお知らせください。
+</footer>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal" id="modalBox"></div>
+</div>
+<canvas id="confetti"></canvas>
+
+<script>
+const DISHES = [
+/* ================= 主菜 ================= */
+{id:'m01',kind:'main',name:'鶏の照り焼き',protein:'肉',style:'和',time:15,cost:610,feature:null,
+ ings:[['鶏もも肉',300,'g','肉']],
+ prep:'鶏肉は余分な脂を取って、厚い部分を開いて均一にします。調味料（しょうゆ・みりん・酒 各大さじ2、砂糖小さじ1）を合わせておきます。',
+ steps:['鶏肉の皮目を下にしてフライパンで中火で焼き、こんがりしたら裏返します。','合わせ調味料を加えて、とろみがつくまで煮からめます。','食べやすく切って、たれをかけて出します。']},
+{id:'m02',kind:'main',name:'豚の生姜焼き',protein:'肉',style:'和',time:15,cost:650,feature:null,
+ remake:'残りは細切りにして、翌日の炒飯や丼の具にすると無駄がありません。',
+ ings:[['豚ロース薄切り',250,'g','肉'],['玉ねぎ',1,'個','野菜'],['生姜',1,'かけ','野菜']],
+ prep:'玉ねぎは薄切り、生姜はすりおろします。しょうゆ・みりん・酒（各大さじ2）と合わせてたれにします。',
+ steps:['フライパンで玉ねぎを炒め、しんなりしたら端に寄せます。','豚肉を広げて焼き、火が通ったらたれを加えます。','全体をからめるように炒め合わせて出します。']},
+{id:'m03',kind:'main',name:'焼き唐揚げ（揚げない唐揚げ）',protein:'肉',style:'和',time:20,cost:610,feature:null,
+ ings:[['鶏もも肉',300,'g','肉'],['生姜',1,'かけ','野菜']],
+ prep:'鶏肉は一口大に切り、しょうゆ・酒・すりおろし生姜で10分ほど下味をつけ、片栗粉をまぶします。',
+ steps:['フライパンに多めの油を熱し、鶏肉を皮目から焼きます。','返しながら全体に火を通し、カリッとしたら取り出します。','油を切って盛りつけます。']},
+{id:'m04',kind:'main',name:'肉じゃが',protein:'肉',style:'和',time:25,cost:650,feature:null,
+ remake:'残りは翌日、粗くつぶして衣をつければコロッケ風に。カレールウを足して和風カレーにもなります。',
+ ings:[['豚こま切れ肉',150,'g','肉'],['じゃがいも',3,'個','野菜'],['玉ねぎ',1,'個','野菜'],['にんじん',1,'本','野菜']],
+ prep:'じゃがいもは一口大、玉ねぎはくし形、にんじんは乱切りにします。',
+ steps:['鍋で豚肉と野菜を炒め、水300mlと砂糖・しょうゆ・みりん（各大さじ2）を加えます。','落としぶたをして弱めの中火で15分ほど煮ます。','じゃがいもがやわらかくなったら火を止め、味をなじませます。']},
+{id:'m05',easy:true,kind:'main',name:'豚肉と白菜のミルフィーユ鍋',protein:'肉',style:'和',time:20,cost:700,feature:'白菜',
+ remake:'残りの白菜と豚肉は、翌日の味噌汁やうどんの具に回せます。',
+ ings:[['豚バラ薄切り',250,'g','肉'],['白菜',0.25,'個','野菜']],
+ prep:'白菜と豚肉を交互に重ねて、4〜5cm幅に切ります。',
+ steps:['鍋に切り口を上にしてぎっしり詰めます。','酒100mlと水100ml、塩小さじ1/2を加えてふたをし、中火で15分ほど蒸し煮にします。','ポン酢やごまだれで食べます。']},
+{id:'m06',easy:true,kind:'main',name:'親子丼',protein:'卵',style:'和',time:15,cost:540,feature:null,
+ ings:[['鶏もも肉',200,'g','肉'],['卵',3,'個','卵・乳製品'],['玉ねぎ',1,'個','野菜']],
+ prep:'鶏肉は小さめの一口大、玉ねぎは薄切りにします。卵は溶きほぐします。',
+ steps:['フライパンにだし150ml、しょうゆ・みりん（各大さじ2）、砂糖大さじ1を煮立てます。','鶏肉と玉ねぎを煮て、火が通ったら溶き卵を回し入れます。','半熟状で火を止め、ごはんにのせます。']},
+{id:'m07',kind:'main',name:'ハンバーグ',protein:'肉',style:'洋',time:25,cost:740,feature:null,
+ remake:'残りは小さく崩してトマト缶と煮れば、簡単ミートソース風になります。',
+ ings:[['合いびき肉',300,'g','肉'],['玉ねぎ',0.5,'個','野菜'],['卵',1,'個','卵・乳製品'],['パン粉',0.5,'カップ','その他'],['牛乳',50,'ml','卵・乳製品']],
+ prep:'玉ねぎはみじん切りにして炒め、冷まします。パン粉は牛乳に浸しておきます。',
+ steps:['ひき肉、玉ねぎ、卵、パン粉、塩こしょうをよく練り、2つに分けて成形します。','フライパンで両面を焼き、ふたをして弱火で6〜7分蒸し焼きにします。','ケチャップとウスターソースを煮詰めたソースをかけます。']},
+{id:'m08',kind:'main',name:'回鍋肉風キャベツ味噌炒め',protein:'肉',style:'和',time:15,cost:570,feature:'キャベツ',
+ ings:[['豚こま切れ肉',200,'g','肉'],['キャベツ',0.25,'個','野菜'],['ピーマン',2,'個','野菜']],
+ prep:'キャベツはざく切り、ピーマンは乱切りにします。味噌・酒・砂糖・しょうゆで合わせ調味料にします。',
+ steps:['フライパンで豚肉を炒め、火が通ったらキャベツとピーマンを加えます。','野菜がしんなりしたら合わせ調味料を加え、手早く炒め合わせます。']},
+{id:'m09',easy:true,kind:'main',name:'麻婆豆腐',protein:'大豆',style:'和',time:15,cost:510,feature:null,
+ remake:'残りはごはんにのせて麻婆丼に。春雨を加えれば、もう一品になります。',
+ ings:[['木綿豆腐',1,'丁','大豆製品'],['豚ひき肉',150,'g','肉'],['長ねぎ',0.5,'本','野菜']],
+ prep:'豆腐は2cm角に切って湯通しします。長ねぎはみじん切りにします。',
+ steps:['フライパンでひき肉を炒め、豆板醤小さじ1と長ねぎを加えて香りを出します。','水200ml、しょうゆ・味噌・酒で味つけし、豆腐を加えて煮ます。','水溶き片栗粉でとろみをつけます。']},
+{id:'m10',kind:'main',name:'鮭の塩焼き 大根おろし添え',protein:'魚',style:'和',time:15,cost:680,feature:'大根',
+ ings:[['生鮭',2,'切れ','魚'],['大根',5,'cm','野菜']],
+ prep:'鮭は塩をして10分置き、水分を拭きます。大根はすりおろします。',
+ steps:['フライパンかグリルで鮭の両面をこんがり焼きます。','大根おろしを添えて出します。']},
+{id:'m11',kind:'main',name:'さばの味噌煮',protein:'魚',style:'和',time:20,cost:570,feature:null,
+ ings:[['さば',2,'切れ','魚'],['生姜',1,'かけ','野菜']],
+ prep:'さばは皮目に十文字の切り込みを入れ、熱湯をかけて霜降りにします。生姜は薄切りにします。',
+ steps:['鍋に水150ml、味噌大さじ2、砂糖・酒・みりん（各大さじ1）と生姜、さばを入れます。','落としぶたをして弱めの中火で12分ほど煮ます。','煮汁をかけながら盛りつけます。']},
+{id:'m12',kind:'main',name:'ぶりの照り焼き',protein:'魚',style:'和',time:15,cost:700,feature:null,
+ ings:[['ぶり',2,'切れ','魚']],
+ prep:'ぶりは塩をして10分置き、水分を拭きます。',
+ steps:['フライパンでぶりの両面を焼きます。','しょうゆ・みりん・酒（各大さじ2）と砂糖大さじ1を加えて煮からめます。']},
+{id:'m13',kind:'main',name:'たらのムニエル',protein:'魚',style:'洋',time:15,cost:650,feature:null,
+ ings:[['たら',2,'切れ','魚'],['バター',10,'g','卵・乳製品'],['レモン',0.5,'個','野菜']],
+ prep:'たらは塩こしょうをして水気を拭き、小麦粉を薄くまぶします。',
+ steps:['フライパンに油とバターを熱し、たらの皮目から焼きます。','裏返して火を通し、レモンを添えます。']},
+{id:'m14',kind:'main',name:'あじの南蛮漬け',protein:'魚',style:'和',time:20,cost:580,feature:null,
+ ings:[['あじ（三枚おろし）',2,'尾分','魚'],['玉ねぎ',0.5,'個','野菜'],['にんじん',0.5,'本','野菜']],
+ prep:'玉ねぎは薄切り、にんじんは千切りにします。酢・しょうゆ・砂糖・水で南蛮酢を作り、野菜を浸します。',
+ steps:['あじに小麦粉をまぶして、多めの油でカリッと焼きます。','熱いうちに南蛮酢へ漬け込みます。','野菜と一緒に盛りつけます（作り置きにも向きます）。']},
+{id:'m15',kind:'main',name:'鮭と白菜のクリーム煮',protein:'魚',style:'洋',time:20,cost:730,feature:'白菜',
+ remake:'残りはごはんにかけてチーズをのせ、ドリア風に焼くと好評です。',
+ ings:[['生鮭',2,'切れ','魚'],['白菜',0.125,'個','野菜'],['牛乳',200,'ml','卵・乳製品'],['玉ねぎ',0.5,'個','野菜']],
+ prep:'鮭は一口大に切って塩こしょうをします。白菜はざく切り、玉ねぎは薄切りにします。',
+ steps:['フライパンで鮭を焼いて取り出し、玉ねぎと白菜を炒めます。','牛乳と水100mlを加えて煮て、鮭を戻し入れます。','塩こしょうで味を調え、水溶き小麦粉で軽くとろみをつけます。']},
+{id:'m16',kind:'main',name:'野菜たっぷりオムレツ',protein:'卵',style:'洋',time:15,cost:470,feature:null,
+ ings:[['卵',4,'個','卵・乳製品'],['玉ねぎ',0.5,'個','野菜'],['ピーマン',2,'個','野菜'],['スライスチーズ',2,'枚','卵・乳製品']],
+ prep:'玉ねぎとピーマンは粗みじんにして、電子レンジで2分加熱しておきます。',
+ steps:['卵を溶いて塩こしょうをし、野菜とチーズを混ぜます。','フライパンに流し入れ、大きく混ぜながら半熟状にします。','形を整えて皿に移し、ケチャップを添えます。']},
+{id:'m17',kind:'main',name:'卵とトマトの炒め物',protein:'卵',style:'和',time:10,cost:430,feature:null,
+ ings:[['卵',3,'個','卵・乳製品'],['トマト',2,'個','野菜']],
+ prep:'トマトはくし形に切ります。卵は溶いて塩少々を加えます。',
+ steps:['フライパンで卵をふんわり炒めて取り出します。','同じフライパンでトマトを炒め、汁気が出たら卵を戻します。','塩と砂糖ひとつまみで味を調えます。']},
+{id:'m18',kind:'main',name:'ニラ玉',protein:'卵',style:'和',time:10,cost:380,feature:null,
+ ings:[['卵',3,'個','卵・乳製品'],['ニラ',1,'束','野菜']],
+ prep:'ニラは4cm長さに切ります。卵を溶いて塩こしょうをします。',
+ steps:['フライパンでニラをさっと炒めます。','溶き卵を回し入れ、大きく混ぜて半熟で止めます。']},
+{id:'m19',kind:'main',name:'豆腐ハンバーグ',protein:'大豆',style:'和',time:20,cost:510,feature:null,
+ ings:[['木綿豆腐',1,'丁','大豆製品'],['鶏ひき肉',150,'g','肉'],['乾燥ひじき',5,'g','乾物・缶詰']],
+ prep:'豆腐は重しをしてしっかり水切りします。ひじきは水で戻します。',
+ steps:['豆腐、ひき肉、ひじき、片栗粉大さじ2、塩をよく混ぜて成形します。','フライパンで両面をこんがり焼きます。','しょうゆ・みりん・だしのあんをかけるか、ポン酢で食べます。']},
+{id:'m20',kind:'main',name:'厚揚げと白菜の煮物',protein:'大豆',style:'和',time:15,cost:400,feature:'白菜',
+ ings:[['厚揚げ',2,'枚','大豆製品'],['白菜',0.125,'個','野菜']],
+ prep:'厚揚げは熱湯をかけて油抜きし、一口大に切ります。白菜はざく切りにします。',
+ steps:['鍋にだし300ml、しょうゆ・みりん（各大さじ2）を煮立てます。','白菜と厚揚げを入れて10分ほど煮ます。']},
+{id:'m21',kind:'main',name:'高野豆腐の卵とじ',protein:'大豆',style:'和',time:15,cost:400,feature:null,
+ ings:[['高野豆腐',4,'個','大豆製品'],['卵',2,'個','卵・乳製品'],['干ししいたけ',2,'枚','乾物・缶詰']],
+ prep:'高野豆腐としいたけは水で戻し、食べやすく切ります。',
+ steps:['鍋に戻し汁とだし、しょうゆ・みりんで高野豆腐を煮含めます。','溶き卵を回しかけ、ふたをして卵が固まったら火を止めます。']},
+{id:'m22',kind:'main',name:'豆腐ステーキ きのこソース',protein:'大豆',style:'和',time:15,cost:450,feature:null,
+ ings:[['木綿豆腐',1,'丁','大豆製品'],['しめじ',1,'パック','野菜']],
+ prep:'豆腐は水切りして4等分し、片栗粉をまぶします。しめじはほぐします。',
+ steps:['フライパンで豆腐の全面をこんがり焼きます。','しめじを炒めてしょうゆ・みりん・バター少々で味つけし、豆腐にかけます。']},
+{id:'m23',easy:true,kind:'main',name:'白菜と鶏団子の鍋',protein:'肉',style:'和',time:25,cost:700,feature:'白菜',
+ remake:'残りの汁は、翌朝の雑炊やうどんのだしに使うと最後までおいしく食べられます。',
+ ings:[['鶏ひき肉',250,'g','肉'],['白菜',0.25,'個','野菜'],['木綿豆腐',0.5,'丁','大豆製品'],['長ねぎ',1,'本','野菜']],
+ prep:'ひき肉に塩・酒・片栗粉・すりおろし生姜を混ぜて団子のたねにします。白菜はざく切り、豆腐は一口大、ねぎは斜め切りにします。',
+ steps:['鍋に水700mlと鶏がらスープの素を煮立て、団子を落とし入れます。','白菜、豆腐、ねぎを加えて煮ます。','塩としょうゆで味を調えます。']},
+{id:'m24',kind:'main',name:'鶏むね肉のチキン南蛮風',protein:'肉',style:'和',time:20,cost:570,feature:null,
+ ings:[['鶏むね肉',300,'g','肉'],['卵',1,'個','卵・乳製品'],['玉ねぎ',0.25,'個','野菜']],
+ prep:'鶏肉はそぎ切りにして塩こしょうをし、小麦粉と溶き卵をくぐらせます。玉ねぎみじん切りとゆで卵でタルタル風ソースを作ります（卵1個はソース用にゆでます）。',
+ steps:['フライパンで鶏肉を両面こんがり焼きます。','甘酢（酢・しょうゆ・砂糖）をさっとからめます。','タルタル風ソースをかけて出します。']},
+/* ================= 副菜 ================= */
+{id:'s01',kind:'side',name:'ほうれん草のおひたし',protein:'野菜',style:'和',time:10,cost:200,feature:null,
+ ings:[['ほうれん草',1,'束','野菜']],
+ prep:'ほうれん草は根元をよく洗います。',
+ steps:['塩ゆでして水に取り、水気をしぼって4cm長さに切ります。','だししょうゆをかけ、かつお節をのせます。']},
+{id:'s02',kind:'side',name:'白菜の浅漬け風サラダ',protein:'野菜',style:'和',time:5,cost:80,feature:'白菜',
+ ings:[['白菜',0.125,'個','野菜']],
+ prep:'白菜は細切りにします。',
+ steps:['塩少々でもんで水気をしぼります。','ごま油と塩昆布少々（あれば）で和えます。']},
+{id:'s03',kind:'side',name:'大根のゆず風味サラダ',protein:'野菜',style:'和',time:10,cost:110,feature:'大根',
+ ings:[['大根',5,'cm','野菜'],['かいわれ大根',0.5,'パック','野菜']],
+ prep:'大根は千切りにします。',
+ steps:['大根を塩でもんで水気を切ります。','ポン酢とごま油で和え、かいわれをのせます。']},
+{id:'s04',kind:'side',name:'きゅうりとわかめの酢の物',protein:'野菜',style:'和',time:10,cost:140,feature:null,
+ ings:[['きゅうり',1,'本','野菜'],['乾燥わかめ',3,'g','乾物・缶詰']],
+ prep:'わかめは水で戻します。きゅうりは薄い輪切りにして塩でもみます。',
+ steps:['きゅうりの水気をしぼり、わかめと合わせます。','酢・砂糖・しょうゆの甘酢で和えます。']},
+{id:'s05',kind:'side',name:'キャベツのコールスロー',protein:'野菜',style:'洋',time:10,cost:120,feature:'キャベツ',
+ ings:[['キャベツ',0.125,'個','野菜'],['にんじん',0.25,'本','野菜']],
+ prep:'キャベツは千切り、にんじんは細切りにします。',
+ steps:['塩でもんで水気をしぼります。','マヨネーズ、酢、砂糖少々で和えます。']},
+{id:'s06',kind:'side',name:'小松菜と油揚げの煮びたし',protein:'野菜',style:'和',time:10,cost:190,feature:null,
+ ings:[['小松菜',1,'束','野菜'],['油揚げ',1,'枚','大豆製品']],
+ prep:'小松菜は4cm長さ、油揚げは短冊に切ります。',
+ steps:['だし200mlにしょうゆ・みりんを加えて煮立てます。','油揚げと小松菜を入れて2〜3分煮ます。']},
+{id:'s07',kind:'side',name:'ブロッコリーのごま和え',protein:'野菜',style:'和',time:10,cost:180,feature:null,
+ ings:[['ブロッコリー',0.5,'株','野菜']],
+ prep:'ブロッコリーは小房に分けます。',
+ steps:['塩ゆでして水気を切ります。','すりごま、砂糖、しょうゆで和えます。']},
+{id:'s08',kind:'side',name:'なすの焼きびたし',protein:'野菜',style:'和',time:15,cost:160,feature:null,
+ ings:[['なす',2,'本','野菜']],
+ prep:'なすは縦半分に切って皮に切り込みを入れます。',
+ steps:['フライパンで両面を焼きます。','だししょうゆに浸して味をなじませます。']},
+{id:'s09',kind:'side',name:'かぼちゃの煮物',protein:'野菜',style:'和',time:15,cost:150,feature:null,
+ ings:[['かぼちゃ',0.125,'個','野菜']],
+ prep:'かぼちゃは一口大に切ります。',
+ steps:['鍋に水200ml、砂糖・しょうゆ・みりんを入れ、かぼちゃを並べます。','落としぶたをして弱火で12分ほど煮ます。']},
+{id:'s10',kind:'side',name:'ポテトサラダ',protein:'野菜',style:'洋',time:15,cost:180,feature:null,
+ ings:[['じゃがいも',2,'個','野菜'],['きゅうり',0.5,'本','野菜']],
+ prep:'じゃがいもは皮をむいて一口大にし、きゅうりは薄切りにして塩でもみます。',
+ steps:['じゃがいもをゆでて熱いうちに粗くつぶします。','きゅうりとマヨネーズ、塩こしょうで和えます。']},
+{id:'s11',kind:'side',name:'もやしのナムル',protein:'野菜',style:'和',time:5,cost:80,feature:null,
+ ings:[['もやし',1,'袋','野菜']],
+ prep:'もやしは洗って水気を切ります。',
+ steps:['熱湯で1分ゆでて、水気をしっかり切ります。','ごま油、塩、すりごまで和えます。']},
+{id:'s12',kind:'side',name:'白菜とツナのサラダ',protein:'野菜',style:'和',time:10,cost:220,feature:'白菜',
+ ings:[['白菜',0.125,'個','野菜'],['ツナ缶',1,'缶','乾物・缶詰']],
+ prep:'白菜は細切りにします。',
+ steps:['白菜を塩でもんで水気をしぼります。','ツナとポン酢、マヨネーズ少々で和えます。']},
+{id:'s13',kind:'side',name:'トマトと玉ねぎのマリネ',protein:'野菜',style:'洋',time:10,cost:150,feature:null,
+ ings:[['トマト',1,'個','野菜'],['玉ねぎ',0.25,'個','野菜']],
+ prep:'玉ねぎは薄切りにして水にさらします。トマトは一口大に切ります。',
+ steps:['玉ねぎの水気を切ってトマトと合わせます。','オリーブ油、酢、塩こしょうで和えて冷やします。']},
+{id:'s14',kind:'side',name:'切り干し大根の煮物',protein:'野菜',style:'和',time:15,cost:160,feature:'大根',
+ ings:[['切り干し大根',20,'g','乾物・缶詰'],['にんじん',0.25,'本','野菜'],['油揚げ',1,'枚','大豆製品']],
+ prep:'切り干し大根は水で戻して絞ります。にんじんは千切り、油揚げは短冊にします。',
+ steps:['鍋で油揚げと野菜を炒め、戻し汁とだしを加えます。','しょうゆ・砂糖・みりんで10分ほど煮ます。']},
+{id:'s15',kind:'side',name:'無限ピーマン',protein:'野菜',style:'和',time:10,cost:200,feature:null,
+ ings:[['ピーマン',3,'個','野菜'],['ツナ缶',1,'缶','乾物・缶詰']],
+ prep:'ピーマンは細切りにします。',
+ steps:['ピーマンとツナを耐熱容器に入れ、電子レンジで3分加熱します。','鶏がらスープの素とごま油で和えます。']},
+{id:'s16',kind:'side',name:'にんじんしりしり',protein:'野菜',style:'和',time:10,cost:140,feature:null,
+ ings:[['にんじん',1,'本','野菜'],['卵',1,'個','卵・乳製品']],
+ prep:'にんじんは千切りにします。',
+ steps:['フライパンでにんじんを炒め、しんなりしたら塩と酒で味つけします。','溶き卵を加えて手早く炒め合わせます。']},
+/* ================= 汁物 ================= */
+{id:'j01',kind:'soup',name:'豆腐とわかめの味噌汁',protein:'大豆',style:'和',time:10,cost:110,feature:null,
+ ings:[['木綿豆腐',0.5,'丁','大豆製品'],['乾燥わかめ',3,'g','乾物・缶詰']],
+ prep:'豆腐はさいの目に切ります。わかめは水で戻します。',
+ steps:['だし600mlを煮立て、豆腐とわかめを入れます。','火を止めて味噌大さじ2を溶き入れます。']},
+{id:'j02',kind:'soup',name:'白菜と油揚げの味噌汁',protein:'大豆',style:'和',time:10,cost:120,feature:'白菜',
+ ings:[['白菜',0.125,'個','野菜'],['油揚げ',1,'枚','大豆製品']],
+ prep:'白菜は細切り、油揚げは短冊に切ります。',
+ steps:['だし600mlで白菜と油揚げを煮ます。','火を止めて味噌大さじ2を溶き入れます。']},
+{id:'j03',kind:'soup',name:'大根とにんじんの味噌汁',protein:'野菜',style:'和',time:10,cost:90,feature:'大根',
+ ings:[['大根',3,'cm','野菜'],['にんじん',0.25,'本','野菜']],
+ prep:'大根とにんじんはいちょう切りにします。',
+ steps:['だし600mlで野菜がやわらかくなるまで煮ます。','火を止めて味噌大さじ2を溶き入れます。']},
+{id:'j04',kind:'soup',name:'玉ねぎと卵の味噌汁',protein:'卵',style:'和',time:10,cost:110,feature:null,
+ ings:[['玉ねぎ',0.5,'個','野菜'],['卵',1,'個','卵・乳製品']],
+ prep:'玉ねぎは薄切りにします。卵は溶きほぐします。',
+ steps:['だし600mlで玉ねぎを煮ます。','味噌を溶き入れてから溶き卵を流し入れ、ふんわりしたら火を止めます。']},
+{id:'j05',kind:'soup',name:'じゃがいもと玉ねぎの味噌汁',protein:'野菜',style:'和',time:10,cost:110,feature:null,
+ ings:[['じゃがいも',1,'個','野菜'],['玉ねぎ',0.5,'個','野菜']],
+ prep:'じゃがいもは一口大、玉ねぎはくし形に切ります。',
+ steps:['だし600mlで野菜を煮て、じゃがいもがやわらかくなったら火を止めます。','味噌大さじ2を溶き入れます。']},
+{id:'j06',kind:'soup',name:'なめこと豆腐の味噌汁',protein:'大豆',style:'和',time:10,cost:160,feature:null,
+ ings:[['なめこ',1,'袋','野菜'],['木綿豆腐',0.5,'丁','大豆製品']],
+ prep:'なめこは洗って水気を切ります。豆腐はさいの目に切ります。',
+ steps:['だし600mlを煮立て、なめこと豆腐を入れます。','火を止めて味噌大さじ2を溶き入れます。']},
+{id:'j07',kind:'soup',name:'キャベツとベーコンのスープ',protein:'肉',style:'洋',time:15,cost:180,feature:'キャベツ',
+ ings:[['キャベツ',0.125,'個','野菜'],['ベーコン',2,'枚','肉']],
+ prep:'キャベツはざく切り、ベーコンは短冊に切ります。',
+ steps:['鍋でベーコンを炒め、水600mlとコンソメを加えます。','キャベツを入れてやわらかくなるまで煮て、塩こしょうで調えます。']},
+{id:'j08',kind:'soup',name:'トマトと卵のスープ',protein:'卵',style:'洋',time:10,cost:150,feature:null,
+ ings:[['トマト',1,'個','野菜'],['卵',1,'個','卵・乳製品']],
+ prep:'トマトはざく切りにします。卵は溶きほぐします。',
+ steps:['水600mlとコンソメを煮立て、トマトを入れます。','溶き卵を流し入れて、水溶き片栗粉で軽くとろみをつけます。']},
+{id:'j09',kind:'soup',name:'根菜のけんちん汁風',protein:'野菜',style:'和',time:15,cost:150,feature:'大根',
+ ings:[['大根',3,'cm','野菜'],['にんじん',0.25,'本','野菜'],['こんにゃく',0.5,'枚','その他']],
+ prep:'大根とにんじんはいちょう切り、こんにゃくは短冊にして下ゆでします。',
+ steps:['ごま油で野菜とこんにゃくを炒め、だし600mlを加えます。','やわらかくなるまで煮て、しょうゆと塩で味を調えます。']}
+];
+
+</script>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const SET_KEY = 'kondate-settings-v1';
+const PLAN_KEY = 'kondate-plan-v1';
+const PRI_LABELS = {nutrition:'栄養バランス', saving:'食費節約', reuse:'食材の使い切り'};
+const DEFAULT_SETTINGS = {people:2, bmin:7000, bmax:10000, time:30, style:'wa', pri:['nutrition','saving','reuse'], ng:'', easy:true};
+const HOME_KEY = 'kondate-home-v1';
+const HOME_CANDIDATES = ['白菜','キャベツ','大根','玉ねぎ','じゃがいも','にんじん','長ねぎ','ほうれん草','ピーマン','トマト','しめじ','卵','木綿豆腐','厚揚げ','鶏もも肉','豚こま切れ肉','生鮭','ツナ缶'];
+let homeIngs = [];
+try{ homeIngs = JSON.parse(localStorage.getItem(HOME_KEY)) || []; }catch(e){}
+const SEASONS = [
+  {name:'冬', months:[12,1,2], ings:['白菜','大根','たら','ぶり','ほうれん草','長ねぎ'], feats:['白菜','大根']},
+  {name:'春', months:[3,4,5], ings:['キャベツ','玉ねぎ','あじ'], feats:['キャベツ']},
+  {name:'夏', months:[6,7,8], ings:['なす','トマト','きゅうり','ピーマン'], feats:[]},
+  {name:'秋', months:[9,10,11], ings:['生鮭','さば','しめじ','かぼちゃ'], feats:['大根','キャベツ']}
+];
+function seasonNow(){ const m = new Date().getMonth() + 1; return SEASONS.find(x => x.months.includes(m)); }
+function isSeasonal(d){ const sn = seasonNow(); return d.ings.some(i => sn.ings.some(w => i[0].includes(w))); }
+let S = loadSettings();
+let plan = loadPlan(); // {feature:'白菜', days:[{main:id, side:id, soup:id} | null x5]}
+const DAY_NAMES = ['月曜日','火曜日','水曜日','木曜日','金曜日'];
+const byId = {};
+DISHES.forEach(d => byId[d.id] = d);
+
+function loadSettings(){
+  try{ const s = JSON.parse(localStorage.getItem(SET_KEY)); if(s) return Object.assign({}, DEFAULT_SETTINGS, s); }catch(e){}
+  return Object.assign({}, DEFAULT_SETTINGS);
+}
+function loadPlan(){
+  try{ const p = JSON.parse(localStorage.getItem(PLAN_KEY)); if(p && Array.isArray(p.days) && p.days.length === 5) return p; }catch(e){}
+  return {feature:null, easyIdx:null, days:[null,null,null,null,null]};
+}
+const SHOP_KEY = 'kondate-shop-v1';
+function savePlan(){ try{ localStorage.setItem(PLAN_KEY, JSON.stringify(plan)); localStorage.removeItem(SHOP_KEY); }catch(e){} }
+function scaleQty(qty){ return qty * S.people / 2; }
+function fmtQty(qty, unit){
+  const q = scaleQty(qty);
+  if(unit === 'g' || unit === 'ml') return String(Math.max(10, Math.round(q / 10) * 10));
+  const e = Math.round(q * 8) / 8;
+  if(e <= 0) return '少し';
+  const whole = Math.floor(e), frac = Math.round((e - whole) * 1000) / 1000;
+  const fr = {0.125:'1/8', 0.25:'1/4', 0.375:'3/8', 0.5:'1/2', 0.625:'5/8', 0.75:'3/4', 0.875:'7/8'};
+  if(frac === 0) return String(whole);
+  return (whole ? String(whole) + ' ' : '') + (fr[frac] || String(frac));
+}
+function dishCost(d){ return Math.round(d.cost * S.people / 2 / 10) * 10; }
+function dayTime(day){
+  if(!day) return 0;
+  return byId[day.main].time + 5; // 副菜・汁物は主菜と並行して作る想定の目安
+}
+function dayCost(day){ return day ? dishCost(byId[day.main]) + dishCost(byId[day.side]) + dishCost(byId[day.soup]) : 0; }
+function weekCost(){ return plan.days.reduce((a, d) => a + dayCost(d), 0); }
+function ngWords(){ return S.ng.split(/[,、\s]+/).map(w => w.trim()).filter(Boolean); }
+function dishAllowed(d){
+  const ng = ngWords();
+  if(!ng.length) return true;
+  const text = d.name + ' ' + d.ings.map(i => i[0]).join(' ');
+  return !ng.some(w => text.includes(w));
+}
+function styleOk(d){
+  if(S.style === 'wa') return true; // 和中心でも洋食は候補に入れる（生成時に比率で調整）
+  return true;
+}
+function priWeight(key){ const i = S.pri.indexOf(key); return i === 0 ? 3 : i === 1 ? 2 : 1; }
+
+/* ---------- 生成ロジック ---------- */
+function usedIds(exceptDay){
+  const u = new Set();
+  plan.days.forEach((d, i) => { if(d && i !== exceptDay){ u.add(d.main); u.add(d.side); u.add(d.soup); } });
+  return u;
+}
+function timeOkMain(d){ return d.time + 5 <= S.time + 5 && d.time <= S.time; }
+function pickBest(cands, scoreFn){
+  let best = null, bestScore = -Infinity;
+  const shuffled = cands.slice();
+  for(let i = shuffled.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]; }
+  for(const d of shuffled){
+    const sc = scoreFn(d) + Math.random() * 0.5;
+    if(sc > bestScore){ bestScore = sc; best = d; }
+  }
+  return best;
+}
+function generateDay(dayIdx, feature){
+  const used = usedIds(dayIdx);
+  let mains = DISHES.filter(d => d.kind === 'main' && !used.has(d.id) && dishAllowed(d) && d.time <= S.time);
+  if(plan.easyIdx === dayIdx){
+    const easyPool = mains.filter(d => d.easy);
+    if(easyPool.length) mains = easyPool;
+  }
+  if(!mains.length) return null;
+  // たんぱく質の偏りを避ける：この週でまだ少ない分野を優先
+  const proteinCount = {};
+  plan.days.forEach((d, i) => { if(d && i !== dayIdx){ const p = byId[d.main].protein; proteinCount[p] = (proteinCount[p] || 0) + 1; } });
+  const main = pickBest(mains, d => {
+    let sc = 0;
+    sc += (2 - Math.min(2, proteinCount[d.protein] || 0)) * 1.2 * priWeight('nutrition');
+    if(feature && d.feature === feature) sc += 2.2 * priWeight('reuse');
+    sc += d.ings.filter(i => homeIngs.includes(i[0])).length * 2.6 * priWeight('reuse');
+    if(isSeasonal(d)) sc += 1.4;
+    sc += (600 - d.cost) / 300 * priWeight('saving');
+    if(S.style === 'wa' && d.style === '洋') sc -= 1.2;
+    if(S.style === 'yo' && d.style === '和') sc -= 0.6;
+    return sc;
+  });
+  const dayIngs = new Set(main.ings.map(i => i[0]));
+  const pickSub = kind => {
+    const pool = DISHES.filter(d => d.kind === kind && !used.has(d.id) && d.id !== main.id && dishAllowed(d));
+    return pickBest(pool, d => {
+      let sc = 0;
+      const shared = d.ings.filter(i => dayIngs.has(i[0])).length;
+      sc += shared * 1.5 * priWeight('reuse');
+      if(feature && d.feature === feature) sc += 2.0 * priWeight('reuse');
+      sc += d.ings.filter(i => homeIngs.includes(i[0])).length * 2.4 * priWeight('reuse');
+      if(isSeasonal(d)) sc += 1.2;
+      sc += (250 - d.cost) / 200 * priWeight('saving');
+      if(S.style === 'wa' && d.style === '洋') sc -= 1.0;
+      return sc;
+    });
+  };
+  const side = pickSub('side');
+  const soup = pickSub('soup');
+  return {main: main.id, side: side.id, soup: soup.id};
+}
+function budgetAdjust(){
+  // 予算の上限を超えていたら、いちばん高い主菜を安い候補に差し替える（最大10回）
+  for(let k = 0; k < 10; k++){
+    if(weekCost() <= S.bmax) return;
+    let worstIdx = -1, worstCost = -1;
+    plan.days.forEach((d, i) => { if(d){ const c = dishCost(byId[d.main]); if(c > worstCost){ worstCost = c; worstIdx = i; } } });
+    if(worstIdx < 0) return;
+    const used = usedIds(worstIdx);
+    const cheaper = DISHES.filter(d => d.kind === 'main' && !used.has(d.id) && dishAllowed(d) && d.time <= S.time && dishCost(d) < worstCost)
+      .sort((a, b) => dishCost(a) - dishCost(b));
+    if(!cheaper.length) return;
+    plan.days[worstIdx] = Object.assign({}, plan.days[worstIdx], {main: cheaper[0].id});
+  }
+}
+function generateWeek(withFx){
+  // 使い切り食材（feature）：家にある野菜 → 旬の食材 → ランダム の順で決める
+  const feats = ['白菜','キャベツ','大根'];
+  const homeFeat = feats.find(f => homeIngs.includes(f));
+  const sn = seasonNow();
+  if(homeFeat) plan.feature = homeFeat;
+  else if(sn.feats.length) plan.feature = sn.feats[Math.floor(Math.random() * sn.feats.length)];
+  else plan.feature = feats[Math.floor(Math.random() * feats.length)];
+  plan.easyIdx = S.easy ? (3 + Math.floor(Math.random() * 2)) : null; // 木曜か金曜を手抜きの日に
+  for(let i = 0; i < 5; i++){
+    if(plan.days[i] === null || withFx){
+      const d = generateDay(i, plan.feature);
+      if(d) plan.days[i] = d;
+    }
+  }
+  budgetAdjust();
+  savePlan();
+  renderAll();
+  if(withFx){ fanfare(); confettiBurst(); }
+}
+function decideDay(i){
+  if(!plan.feature) plan.feature = '白菜';
+  const d = generateDay(i, plan.feature);
+  if(d){ plan.days[i] = d; budgetAdjust(); savePlan(); renderAll(); tap(); }
+}
+function undecideDay(i){
+  plan.days[i] = null;
+  savePlan(); renderAll(); tap();
+}
+
+/* ---------- 描画 ---------- */
+function showTab(name){
+  ['week','shop','fridge','set'].forEach(t => {
+    $('scr-' + t).classList.toggle('on', t === name);
+    $('tab-' + t).classList.toggle('on', t === name);
+  });
+  if(name === 'shop') renderShop();
+  window.scrollTo(0, 0);
+}
+function badges(d){
+  let b = '<span class="badge">' + d.protein + '</span>';
+  if(isSeasonal(d)) b += '<span class="badge reuse">旬</span>';
+  if(plan.feature && d.feature === plan.feature) b += '<span class="badge reuse">使い切り</span>';
+  return b;
+}
+function dishRow(dayIdx, slot, label, cls){
+  const d = byId[plan.days[dayIdx][slot]];
+  return '<div class="dish"><span class="slot ' + cls + '">' + label + '</span>' +
+    '<span class="name" onclick="showDish(\'' + d.id + '\')">' + d.name + badges(d) +
+    '<small>約' + d.time + '分 ・ ' + dishCost(d) + '円</small></span>' +
+    '<button class="chg" onclick="openSwap(' + dayIdx + ',\'' + slot + '\')">変更</button></div>';
+}
+function renderWeek(){
+  const total = weekCost();
+  const decided = plan.days.filter(Boolean).length;
+  const status = decided === 0 ? 'まだ献立が決まっていません' :
+    total > S.bmax ? '<span class="over">予算オーバー（あと' + (total - S.bmax) + '円分）</span>' :
+    total < S.bmin ? '予算内です（下限より ' + (S.bmin - total) + '円 少ない見積もり）' : '<span class="ok">予算内です</span>';
+  $('weekSummary').innerHTML =
+    '<div class="row"><span>今週の夕食（' + decided + ' / 5回分）</span><span class="big">' + total.toLocaleString() + '円</span></div>' +
+    '<div class="row"><span>予算 ' + S.bmin.toLocaleString() + '〜' + S.bmax.toLocaleString() + '円 ・ ' + S.people + '人分</span><span>' + status + '</span></div>' +
+    (plan.feature ? '<div class="row"><span>今週の使い切り食材</span><span><b>' + plan.feature + '</b> を何回か登場させます</span></div>' : '') +
+    '<div class="row"><span>季節</span><span>' + seasonNow().name + ' ― 旬の食材（' + seasonNow().ings.join('・') + '）を優先しています</span></div>';
+  $('days').innerHTML = plan.days.map((day, i) => {
+    if(!day){
+      return '<div class="day"><h3>' + DAY_NAMES[i] + '</h3><div class="undecided">この日は未定です<br>' +
+        '<button onclick="decideDay(' + i + ')">🍽 この日の献立を決める</button></div></div>';
+    }
+    const mainD = byId[day.main];
+    return '<div class="day"><h3>' + DAY_NAMES[i] + (plan.easyIdx === i ? ' <span class="badge reuse">手抜きの日</span>' : '') + '<span class="meta">約' + dayTime(day) + '分 ・ ' + dayCost(day).toLocaleString() + '円</span></h3>' +
+      dishRow(i, 'main', '主菜', '') + dishRow(i, 'side', '副菜', 'side') + dishRow(i, 'soup', '汁物', 'soup') +
+      (mainD.remake ? '<div class="remake">▶ 翌日リメイク：' + mainD.remake + '</div>' : '') +
+      '<div class="dayfoot"><button onclick="decideDay(' + i + ')">↻ この日を作り直す</button>' +
+      '<button onclick="undecideDay(' + i + ')">未定にする</button></div></div>';
+  }).join('');
+}
+function renderShop(){
+  const agg = {}; // name+unit -> {qty, unit, cat}
+  plan.days.forEach(day => {
+    if(!day) return;
+    [day.main, day.side, day.soup].forEach(id => {
+      byId[id].ings.forEach(([name, qty, unit, cat]) => {
+        const key = name + '|' + unit;
+        if(!agg[key]) agg[key] = {name, unit, cat, qty: 0};
+        agg[key].qty += qty;
+      });
+    });
+  });
+  const cats = ['野菜','肉','魚','卵・乳製品','大豆製品','乾物・缶詰','その他'];
+  const items = Object.values(agg);
+  const diffMax = S.bmax - weekCost();
+  $('shopSummary').innerHTML = '<div class="row"><span>買い物リスト（' + items.length + '品目）</span><span class="big">' + weekCost().toLocaleString() + '円<span style="font-size:12px;"> 目安</span></span></div>' +
+    '<div class="row"><span>' + S.people + '人分 ・ 夕食5回分</span><span>' + (diffMax >= 0 ? '<span class="ok">予算の上限まで あと' + diffMax.toLocaleString() + '円</span>' : '<span class="over">予算の上限を ' + (-diffMax).toLocaleString() + '円 オーバー</span>') + '</span></div>' +
+    '<div class="row"><span>週間予算</span><span>' + S.bmin.toLocaleString() + '〜' + S.bmax.toLocaleString() + '円</span></div>' +
+    '<p class="note" style="margin:6px 0 0;">売り場の順に並んでいます。買えたらチェックを入れてください（チェックは献立を作り直すとリセットされます）。</p>';
+  if(!items.length){ $('shopList').innerHTML = '<p class="note">献立が決まると、ここに買い物リストが出ます。</p>'; return; }
+  $('shopList').innerHTML = cats.map(cat => {
+    const list = items.filter(i => i.cat === cat);
+    if(!list.length) return '';
+    let checks = {};
+    try{ checks = JSON.parse(localStorage.getItem(SHOP_KEY)) || {}; }catch(e){}
+    return '<div class="shop-cat">' + cat + '</div>' + list.map(i => {
+      const key = i.name + '|' + i.unit;
+      const done = checks[key] ? ' done' : '';
+      return '<div class="shop-item' + done + '"><label><span><input type="checkbox" ' + (checks[key] ? 'checked' : '') +
+        ' onchange="toggleShopCheck(\'' + key.replace(/'/g, '') + '\', this)"><span class="nm">' + i.name + '</span></span>' +
+        '<span class="qty">' + fmtQty(i.qty, i.unit) + i.unit + '</span></label></div>';
+    }).join('');
+  }).join('');
+}
+function renderAll(){ renderWeek(); }
+
+/* ---------- モーダル ---------- */
+function openModal(html){ $('modalBox').innerHTML = html; $('modalBg').classList.add('open'); }
+function closeModal(){ $('modalBg').classList.remove('open'); }
+$('modalBg').addEventListener('click', e => { if(e.target === $('modalBg')) closeModal(); });
+function showDish(id){
+  const d = byId[id];
+  tap();
+  openModal('<h3>' + d.name + '</h3>' +
+    '<p class="note">約' + d.time + '分 ・ ' + dishCost(d) + '円（' + S.people + '人分） ・ ' + d.protein + ' ・ ' + d.style + '食</p>' +
+    '<h4>材料（' + S.people + '人分）</h4><ul>' +
+    d.ings.map(([n, q, u]) => '<li>' + n + ' …… ' + fmtQty(q, u) + u + '</li>').join('') +
+    '<li>調味料（しょうゆ・味噌・油など）…… 適量（常備品）</li></ul>' +
+    '<h4>事前準備（下ごしらえ）</h4><p>' + d.prep + '</p>' +
+    '<h4>作り方</h4><ol>' + d.steps.map(s => '<li>' + s + '</li>').join('') + '</ol>' +
+    '<button class="closeBtn" onclick="closeModal()">閉じる</button>');
+}
+let swapCtx = null;
+function openSwap(dayIdx, slot){
+  swapCtx = {dayIdx, slot};
+  const kind = slot;
+  const cur = plan.days[dayIdx][slot];
+  const used = usedIds(dayIdx);
+  const pool = DISHES.filter(d => d.kind === kind && dishAllowed(d))
+    .sort((a, b) => (used.has(a.id) ? 1 : 0) - (used.has(b.id) ? 1 : 0) || a.cost - b.cost);
+  tap();
+  openModal('<h3>' + (kind === 'main' ? '主菜' : kind === 'side' ? '副菜' : '汁物') + 'の変更</h3>' +
+    '<p class="note">選ぶと、買い物リストと費用が自動で計算し直されます。「今週の献立でもう登場している品」には印がついています。</p>' +
+    pool.map(d => '<button class="cand' + (d.id === cur ? ' cur' : '') + '" onclick="doSwap(\'' + d.id + '\')">' +
+      '<span><span class="cname">' + d.name + '</span>' + badges(d) + (used.has(d.id) ? '<span class="badge">今週登場済み</span>' : '') +
+      '<span class="cmeta" style="display:block;">約' + d.time + '分 ・ ' + dishCost(d) + '円 ・ ' + d.protein + ' ・ ' + d.style + '食</span></span>' +
+      '<span>' + (d.id === cur ? 'いまの品' : 'これにする') + '</span></button>').join('') +
+    '<button class="closeBtn" onclick="closeModal()">閉じる</button>');
+}
+function doSwap(id){
+  if(!swapCtx) return;
+  plan.days[swapCtx.dayIdx][swapCtx.slot] = id;
+  savePlan(); closeModal(); renderAll(); tap();
+}
+
+function toggleShopCheck(key, el){
+  let checks = {};
+  try{ checks = JSON.parse(localStorage.getItem(SHOP_KEY)) || {}; }catch(e){}
+  if(el.checked) checks[key] = 1; else delete checks[key];
+  try{ localStorage.setItem(SHOP_KEY, JSON.stringify(checks)); }catch(e){}
+  el.closest('.shop-item').classList.toggle('done', el.checked);
+  tap();
+}
+function renderHomeChips(){
+  $('homeChips').innerHTML = HOME_CANDIDATES.map(n =>
+    '<button class="chip' + (homeIngs.includes(n) ? ' on' : '') + '" onclick="toggleHome(\'' + n + '\')">' + n + '</button>').join('');
+}
+function toggleHome(n){
+  if(homeIngs.includes(n)) homeIngs = homeIngs.filter(x => x !== n);
+  else homeIngs.push(n);
+  try{ localStorage.setItem(HOME_KEY, JSON.stringify(homeIngs)); }catch(e){}
+  renderHomeChips(); tap();
+}
+
+/* ---------- 設定 ---------- */
+function fillSettings(){
+  $('set-people').value = String(S.people);
+  $('set-bmin').value = S.bmin;
+  $('set-bmax').value = S.bmax;
+  $('set-time').value = String(S.time);
+  $('set-style').value = S.style;
+  $('set-ng').value = S.ng;
+  $('set-easy').value = S.easy ? '1' : '0';
+  ['set-pri1','set-pri2','set-pri3'].forEach((id, i) => {
+    $(id).innerHTML = Object.keys(PRI_LABELS).map(k => '<option value="' + k + '">' + (i + 1) + '位：' + PRI_LABELS[k] + '</option>').join('');
+    $(id).value = S.pri[i];
+  });
+}
+function saveSettings(){
+  const pri = [$('set-pri1').value, $('set-pri2').value, $('set-pri3').value];
+  S = {
+    people: parseInt($('set-people').value, 10) || 2,
+    bmin: Math.max(0, parseInt($('set-bmin').value, 10) || 0),
+    bmax: Math.max(0, parseInt($('set-bmax').value, 10) || 0),
+    time: parseInt($('set-time').value, 10) || 30,
+    style: $('set-style').value,
+    pri: [...new Set(pri)].length === 3 ? pri : S.pri,
+    ng: $('set-ng').value,
+    easy: $('set-easy').value === '1'
+  };
+  if(S.bmax < S.bmin){ const t = S.bmin; S.bmin = S.bmax; S.bmax = t; }
+  try{ localStorage.setItem(SET_KEY, JSON.stringify(S)); }catch(e){}
+  renderAll();
+  fanfare();
+  alert('設定を保存しました。');
+}
+
+/* ---------- 音と紙吹雪 ---------- */
+let AC = null;
+function tone(f, t, dur, type, vol){
+  try{
+    if(!AC) AC = new (window.AudioContext || window.webkitAudioContext)();
+    const o = AC.createOscillator(), g = AC.createGain();
+    o.type = type || 'sine'; o.frequency.value = f;
+    const st = AC.currentTime + (t || 0);
+    g.gain.setValueAtTime(vol || 0.12, st);
+    g.gain.exponentialRampToValueAtTime(0.001, st + dur);
+    o.connect(g); g.connect(AC.destination);
+    o.start(st); o.stop(st + dur);
+  }catch(e){}
+}
+function tap(){ tone(660, 0, 0.07, 'triangle', 0.06); }
+function fanfare(){ [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.09, 0.22, 'triangle', 0.1)); }
+function confettiBurst(){
+  const cv = $('confetti'), ctx = cv.getContext('2d');
+  cv.width = innerWidth; cv.height = innerHeight;
+  const cols = ['#e2571e','#f2a03d','#4d9e57','#4d8ec4','#e63950'];
+  const ps = Array.from({length: 90}, () => ({x: Math.random() * cv.width, y: -20 - Math.random() * cv.height * 0.3, w: 6 + Math.random() * 6, h: 8 + Math.random() * 8, vy: 2 + Math.random() * 3, vx: -1 + Math.random() * 2, r: Math.random() * Math.PI, vr: -0.1 + Math.random() * 0.2, c: cols[Math.floor(Math.random() * cols.length)]}));
+  let frames = 0;
+  (function anim(){
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    ps.forEach(p => { p.y += p.vy; p.x += p.vx; p.r += p.vr; ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.fillStyle = p.c; ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); ctx.restore(); });
+    if(++frames < 130) requestAnimationFrame(anim); else ctx.clearRect(0, 0, cv.width, cv.height);
+  })();
+}
+
+/* ---------- 起動 ---------- */
+fillSettings();
+renderHomeChips();
+renderAll();
+</script>
+</body>
+</html>
