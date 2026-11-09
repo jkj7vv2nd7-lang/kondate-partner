@@ -24,7 +24,7 @@
   header p{margin:6px 0 0; font-size:13px; opacity:.92;}
   .sr-only{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0);}
   nav.tabs{display:flex; gap:6px; padding:10px 10px 0;}
-  nav.tabs button{flex:1; padding:10px 2px; border:2px solid var(--line); background:#fff; border-radius:12px 12px 0 0; font-size:14px; font-weight:700; color:var(--sub); cursor:pointer;}
+  nav.tabs button{flex:1; padding:10px 1px; border:2px solid var(--line); background:#fff; border-radius:12px 12px 0 0; font-size:13px; font-weight:700; color:var(--sub); cursor:pointer;}
   nav.tabs button.on{background:var(--card); color:var(--accent); border-bottom-color:var(--card);}
   .slot.main{background:#c65a2e;}
   main{padding:12px 12px 40px; max-width:640px; margin:0 auto;}
@@ -63,6 +63,14 @@
   .chip.on{background:var(--accent); border-color:var(--accent); color:#fff; font-weight:700;}
   .homebox{background:var(--card); border:2px solid var(--line); border-radius:14px; padding:12px 14px; margin-bottom:12px;}
   .homebox b{font-size:14px;}
+  .kcal-line{font-size:12px; color:var(--sub); margin-top:8px;}
+  .navbtn{border:2px solid var(--line); background:#fff; border-radius:10px; padding:7px 10px; font-size:12px; font-weight:700; color:var(--accent); cursor:pointer;}
+  .subbtn{display:block; width:100%; padding:11px; border:2px solid var(--accent); background:#fff; border-radius:12px; font-size:14px; font-weight:700; color:var(--accent); cursor:pointer; margin-top:8px;}
+  .log-item{display:flex; gap:10px; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:10px; margin-bottom:8px; align-items:center;}
+  .log-item img{width:56px; height:56px; object-fit:cover; border-radius:8px; flex:0 0 auto;}
+  .log-item .li-body{flex:1; font-size:14px;}
+  .log-item .li-kcal{font-weight:800;}
+  .log-item .li-pfc{font-size:11px; color:var(--sub);}
   .remake{font-size:12px; color:#6d5510; background:#f7ecd2; border-radius:8px; padding:6px 9px; margin-top:8px; line-height:1.6;}
   .shop-item label{display:flex; justify-content:space-between; width:100%; cursor:pointer;}
   .shop-item input{width:20px; height:20px; margin-right:10px; accent-color:var(--green);}
@@ -107,6 +115,7 @@
 <nav class="tabs">
   <button id="tab-week" class="on" onclick="showTab('week')">📅 献立</button>
   <button id="tab-shop" onclick="showTab('shop')">🛒 買い物</button>
+  <button id="tab-log" onclick="showTab('log')">📝 記録</button>
   <button id="tab-fridge" onclick="showTab('fridge')">🧊 冷蔵庫</button>
   <button id="tab-set" onclick="showTab('set')">⚙️ 設定</button>
 </nav>
@@ -130,6 +139,53 @@
     <div class="summary" id="shopSummary"></div>
     <div id="shopList"></div>
     <p class="note">※ しょうゆ・味噌・油などの調味料と、お米は常備品として数えていません。分量は設定人数に合わせた1週間分の合計です。</p>
+  </section>
+
+  <!-- 食べたものの記録 -->
+  <section class="screen" id="scr-log">
+    <div class="summary">
+      <div class="row"><span>食べたものの記録</span><span id="logDateLabel" style="font-weight:800;"></span></div>
+      <div class="row">
+        <button class="navbtn" onclick="moveLogDate(-1)">‹ 前の日</button>
+        <span>合計 <span class="big" id="logTotal">0</span> kcal</span>
+        <button class="navbtn" onclick="moveLogDate(1)">次の日 ›</button>
+      </div>
+      <div class="row"><span>たんぱく質・脂質・炭水化物（目安）</span><span id="logPfc"></span></div>
+    </div>
+
+    <div class="homebox">
+      <b>＋ 記録を追加</b>
+      <p class="note" style="margin:4px 0 0;">写真は任意で、次の1件の記録に付きます。写真から料理やカロリーを自動で読み取ることはしません。</p>
+      <input type="file" id="logPhoto" accept="image/*" style="display:none">
+      <button class="subbtn" onclick="document.getElementById('logPhoto').click()">📷 写真を添付する</button>
+      <p class="note" id="logPhotoState" style="margin:4px 0 0;"></p>
+      <div class="field" style="margin-top:10px; margin-bottom:0;">
+        <label>献立の料理から選ぶ</label>
+        <select id="logDishSel"></select>
+      </div>
+      <button class="subbtn" onclick="addLogFromDish()">この料理を記録する</button>
+      <button class="subbtn" id="logPlanBtn" onclick="addLogFromPlan()">今日の献立をまとめて記録</button>
+      <div class="field" style="margin-top:14px; margin-bottom:0;">
+        <label>手入力（名前とカロリー）</label>
+        <input type="text" id="logName" placeholder="例：ごはんと焼き魚の定食">
+        <div style="display:flex; gap:8px; margin-top:8px;">
+          <input type="number" id="logKcal" placeholder="kcal" min="0">
+          <input type="number" id="logP" placeholder="たんぱく質g" min="0">
+          <input type="number" id="logF" placeholder="脂質g" min="0">
+          <input type="number" id="logC" placeholder="炭水化物g" min="0">
+        </div>
+      </div>
+      <button class="subbtn" onclick="addLogManual()">手入力で記録する</button>
+    </div>
+
+    <div id="logList"></div>
+
+    <div class="homebox">
+      <b>最近7日の合計</b>
+      <div id="logWeek" style="margin-top:6px;"></div>
+    </div>
+
+    <p class="note">数字はすべて目安です。この記録は健康管理のためのもので、医療や食事指導のアドバイスではありません。<br>食事の写真をメインのチャットでCatherineに送ると、カロリーの目安を見積もってお返しします。ここへの記録はご自身でどうぞ。</p>
   </section>
 
   <!-- 冷蔵庫：在庫メモ（写真登録） -->
@@ -213,207 +269,256 @@
 const DISHES = [
 /* ================= 主菜 ================= */
 {id:'m01',kind:'main',name:'鶏の照り焼き',protein:'肉',style:'和',time:15,cost:610,feature:null,
+ kcal:330,p:28,f:18,c:10,
  ings:[['鶏もも肉',300,'g','肉']],
  prep:'鶏肉は余分な脂を取って、厚い部分を開いて均一にします。調味料（しょうゆ・みりん・酒 各大さじ2、砂糖小さじ1）を合わせておきます。',
  steps:['鶏肉の皮目を下にしてフライパンで中火で焼き、こんがりしたら裏返します。','合わせ調味料を加えて、とろみがつくまで煮からめます。','食べやすく切って、たれをかけて出します。']},
 {id:'m02',kind:'main',name:'豚の生姜焼き',protein:'肉',style:'和',time:15,cost:650,feature:null,
  remake:'残りは細切りにして、翌日の炒飯や丼の具にすると無駄がありません。',
+ kcal:380,p:26,f:24,c:12,
  ings:[['豚ロース薄切り',250,'g','肉'],['玉ねぎ',1,'個','野菜'],['生姜',1,'かけ','野菜']],
  prep:'玉ねぎは薄切り、生姜はすりおろします。しょうゆ・みりん・酒（各大さじ2）と合わせてたれにします。',
  steps:['フライパンで玉ねぎを炒め、しんなりしたら端に寄せます。','豚肉を広げて焼き、火が通ったらたれを加えます。','全体をからめるように炒め合わせて出します。']},
 {id:'m03',kind:'main',name:'焼き唐揚げ（揚げない唐揚げ）',protein:'肉',style:'和',time:20,cost:610,feature:null,
+ kcal:360,p:27,f:20,c:14,
  ings:[['鶏もも肉',300,'g','肉'],['生姜',1,'かけ','野菜']],
  prep:'鶏肉は一口大に切り、しょうゆ・酒・すりおろし生姜で10分ほど下味をつけ、片栗粉をまぶします。',
  steps:['フライパンに多めの油を熱し、鶏肉を皮目から焼きます。','返しながら全体に火を通し、カリッとしたら取り出します。','油を切って盛りつけます。']},
 {id:'m04',kind:'main',name:'肉じゃが',protein:'肉',style:'和',time:25,cost:650,feature:null,
  remake:'残りは翌日、粗くつぶして衣をつければコロッケ風に。カレールウを足して和風カレーにもなります。',
+ kcal:320,p:16,f:12,c:36,
  ings:[['豚こま切れ肉',150,'g','肉'],['じゃがいも',3,'個','野菜'],['玉ねぎ',1,'個','野菜'],['にんじん',1,'本','野菜']],
  prep:'じゃがいもは一口大、玉ねぎはくし形、にんじんは乱切りにします。',
  steps:['鍋で豚肉と野菜を炒め、水300mlと砂糖・しょうゆ・みりん（各大さじ2）を加えます。','落としぶたをして弱めの中火で15分ほど煮ます。','じゃがいもがやわらかくなったら火を止め、味をなじませます。']},
 {id:'m05',easy:true,kind:'main',name:'豚肉と白菜のミルフィーユ鍋',protein:'肉',style:'和',time:20,cost:700,feature:'白菜',
  remake:'残りの白菜と豚肉は、翌日の味噌汁やうどんの具に回せます。',
+ kcal:300,p:22,f:18,c:10,
  ings:[['豚バラ薄切り',250,'g','肉'],['白菜',0.25,'個','野菜']],
  prep:'白菜と豚肉を交互に重ねて、4〜5cm幅に切ります。',
  steps:['鍋に切り口を上にしてぎっしり詰めます。','酒100mlと水100ml、塩小さじ1/2を加えてふたをし、中火で15分ほど蒸し煮にします。','ポン酢やごまだれで食べます。']},
 {id:'m06',easy:true,kind:'main',name:'親子丼',protein:'卵',style:'和',time:15,cost:540,feature:null,
+ kcal:560,p:28,f:14,c:74,
  ings:[['鶏もも肉',200,'g','肉'],['卵',3,'個','卵・乳製品'],['玉ねぎ',1,'個','野菜']],
  prep:'鶏肉は小さめの一口大、玉ねぎは薄切りにします。卵は溶きほぐします。',
  steps:['フライパンにだし150ml、しょうゆ・みりん（各大さじ2）、砂糖大さじ1を煮立てます。','鶏肉と玉ねぎを煮て、火が通ったら溶き卵を回し入れます。','半熟状で火を止め、ごはんにのせます。']},
 {id:'m07',kind:'main',name:'ハンバーグ',protein:'肉',style:'洋',time:25,cost:740,feature:null,
  remake:'残りは小さく崩してトマト缶と煮れば、簡単ミートソース風になります。',
+ kcal:420,p:24,f:26,c:16,
  ings:[['合いびき肉',300,'g','肉'],['玉ねぎ',0.5,'個','野菜'],['卵',1,'個','卵・乳製品'],['パン粉',0.5,'カップ','その他'],['牛乳',50,'ml','卵・乳製品']],
  prep:'玉ねぎはみじん切りにして炒め、冷まします。パン粉は牛乳に浸しておきます。',
  steps:['ひき肉、玉ねぎ、卵、パン粉、塩こしょうをよく練り、2つに分けて成形します。','フライパンで両面を焼き、ふたをして弱火で6〜7分蒸し焼きにします。','ケチャップとウスターソースを煮詰めたソースをかけます。']},
 {id:'m08',kind:'main',name:'回鍋肉風キャベツ味噌炒め',protein:'肉',style:'和',time:15,cost:570,feature:'キャベツ',
+ kcal:350,p:20,f:22,c:14,
  ings:[['豚こま切れ肉',200,'g','肉'],['キャベツ',0.25,'個','野菜'],['ピーマン',2,'個','野菜']],
  prep:'キャベツはざく切り、ピーマンは乱切りにします。味噌・酒・砂糖・しょうゆで合わせ調味料にします。',
  steps:['フライパンで豚肉を炒め、火が通ったらキャベツとピーマンを加えます。','野菜がしんなりしたら合わせ調味料を加え、手早く炒め合わせます。']},
 {id:'m09',easy:true,kind:'main',name:'麻婆豆腐',protein:'大豆',style:'和',time:15,cost:510,feature:null,
  remake:'残りはごはんにのせて麻婆丼に。春雨を加えれば、もう一品になります。',
+ kcal:330,p:20,f:20,c:12,
  ings:[['木綿豆腐',1,'丁','大豆製品'],['豚ひき肉',150,'g','肉'],['長ねぎ',0.5,'本','野菜']],
  prep:'豆腐は2cm角に切って湯通しします。長ねぎはみじん切りにします。',
  steps:['フライパンでひき肉を炒め、豆板醤小さじ1と長ねぎを加えて香りを出します。','水200ml、しょうゆ・味噌・酒で味つけし、豆腐を加えて煮ます。','水溶き片栗粉でとろみをつけます。']},
 {id:'m10',kind:'main',name:'鮭の塩焼き 大根おろし添え',protein:'魚',style:'和',time:15,cost:680,feature:'大根',
+ kcal:230,p:24,f:12,c:2,
  ings:[['生鮭',2,'切れ','魚'],['大根',5,'cm','野菜']],
  prep:'鮭は塩をして10分置き、水分を拭きます。大根はすりおろします。',
  steps:['フライパンかグリルで鮭の両面をこんがり焼きます。','大根おろしを添えて出します。']},
 {id:'m11',kind:'main',name:'さばの味噌煮',protein:'魚',style:'和',time:20,cost:570,feature:null,
+ kcal:340,p:23,f:22,c:10,
  ings:[['さば',2,'切れ','魚'],['生姜',1,'かけ','野菜']],
  prep:'さばは皮目に十文字の切り込みを入れ、熱湯をかけて霜降りにします。生姜は薄切りにします。',
  steps:['鍋に水150ml、味噌大さじ2、砂糖・酒・みりん（各大さじ1）と生姜、さばを入れます。','落としぶたをして弱めの中火で12分ほど煮ます。','煮汁をかけながら盛りつけます。']},
 {id:'m12',kind:'main',name:'ぶりの照り焼き',protein:'魚',style:'和',time:15,cost:700,feature:null,
+ kcal:330,p:24,f:20,c:10,
  ings:[['ぶり',2,'切れ','魚']],
  prep:'ぶりは塩をして10分置き、水分を拭きます。',
  steps:['フライパンでぶりの両面を焼きます。','しょうゆ・みりん・酒（各大さじ2）と砂糖大さじ1を加えて煮からめます。']},
 {id:'m13',kind:'main',name:'たらのムニエル',protein:'魚',style:'洋',time:15,cost:650,feature:null,
+ kcal:260,p:22,f:14,c:8,
  ings:[['たら',2,'切れ','魚'],['バター',10,'g','卵・乳製品'],['レモン',0.5,'個','野菜']],
  prep:'たらは塩こしょうをして水気を拭き、小麦粉を薄くまぶします。',
  steps:['フライパンに油とバターを熱し、たらの皮目から焼きます。','裏返して火を通し、レモンを添えます。']},
 {id:'m14',kind:'main',name:'あじの南蛮漬け',protein:'魚',style:'和',time:20,cost:580,feature:null,
+ kcal:280,p:20,f:14,c:16,
  ings:[['あじ（三枚おろし）',2,'尾分','魚'],['玉ねぎ',0.5,'個','野菜'],['にんじん',0.5,'本','野菜']],
  prep:'玉ねぎは薄切り、にんじんは千切りにします。酢・しょうゆ・砂糖・水で南蛮酢を作り、野菜を浸します。',
  steps:['あじに小麦粉をまぶして、多めの油でカリッと焼きます。','熱いうちに南蛮酢へ漬け込みます。','野菜と一緒に盛りつけます（作り置きにも向きます）。']},
 {id:'m15',kind:'main',name:'鮭と白菜のクリーム煮',protein:'魚',style:'洋',time:20,cost:730,feature:'白菜',
  remake:'残りはごはんにかけてチーズをのせ、ドリア風に焼くと好評です。',
+ kcal:340,p:22,f:20,c:14,
  ings:[['生鮭',2,'切れ','魚'],['白菜',0.125,'個','野菜'],['牛乳',200,'ml','卵・乳製品'],['玉ねぎ',0.5,'個','野菜']],
  prep:'鮭は一口大に切って塩こしょうをします。白菜はざく切り、玉ねぎは薄切りにします。',
  steps:['フライパンで鮭を焼いて取り出し、玉ねぎと白菜を炒めます。','牛乳と水100mlを加えて煮て、鮭を戻し入れます。','塩こしょうで味を調え、水溶き小麦粉で軽くとろみをつけます。']},
 {id:'m16',kind:'main',name:'野菜たっぷりオムレツ',protein:'卵',style:'洋',time:15,cost:470,feature:null,
+ kcal:280,p:15,f:19,c:9,
  ings:[['卵',4,'個','卵・乳製品'],['玉ねぎ',0.5,'個','野菜'],['ピーマン',2,'個','野菜'],['スライスチーズ',2,'枚','卵・乳製品']],
  prep:'玉ねぎとピーマンは粗みじんにして、電子レンジで2分加熱しておきます。',
  steps:['卵を溶いて塩こしょうをし、野菜とチーズを混ぜます。','フライパンに流し入れ、大きく混ぜながら半熟状にします。','形を整えて皿に移し、ケチャップを添えます。']},
 {id:'m17',kind:'main',name:'卵とトマトの炒め物',protein:'卵',style:'和',time:10,cost:430,feature:null,
+ kcal:210,p:10,f:14,c:8,
  ings:[['卵',3,'個','卵・乳製品'],['トマト',2,'個','野菜']],
  prep:'トマトはくし形に切ります。卵は溶いて塩少々を加えます。',
  steps:['フライパンで卵をふんわり炒めて取り出します。','同じフライパンでトマトを炒め、汁気が出たら卵を戻します。','塩と砂糖ひとつまみで味を調えます。']},
 {id:'m18',kind:'main',name:'ニラ玉',protein:'卵',style:'和',time:10,cost:380,feature:null,
+ kcal:190,p:11,f:13,c:5,
  ings:[['卵',3,'個','卵・乳製品'],['ニラ',1,'束','野菜']],
  prep:'ニラは4cm長さに切ります。卵を溶いて塩こしょうをします。',
  steps:['フライパンでニラをさっと炒めます。','溶き卵を回し入れ、大きく混ぜて半熟で止めます。']},
 {id:'m19',kind:'main',name:'豆腐ハンバーグ',protein:'大豆',style:'和',time:20,cost:510,feature:null,
+ kcal:290,p:17,f:15,c:18,
  ings:[['木綿豆腐',1,'丁','大豆製品'],['鶏ひき肉',150,'g','肉'],['乾燥ひじき',5,'g','乾物・缶詰']],
  prep:'豆腐は重しをしてしっかり水切りします。ひじきは水で戻します。',
  steps:['豆腐、ひき肉、ひじき、片栗粉大さじ2、塩をよく混ぜて成形します。','フライパンで両面をこんがり焼きます。','しょうゆ・みりん・だしのあんをかけるか、ポン酢で食べます。']},
 {id:'m20',kind:'main',name:'厚揚げと白菜の煮物',protein:'大豆',style:'和',time:15,cost:400,feature:'白菜',
+ kcal:220,p:12,f:13,c:10,
  ings:[['厚揚げ',2,'枚','大豆製品'],['白菜',0.125,'個','野菜']],
  prep:'厚揚げは熱湯をかけて油抜きし、一口大に切ります。白菜はざく切りにします。',
  steps:['鍋にだし300ml、しょうゆ・みりん（各大さじ2）を煮立てます。','白菜と厚揚げを入れて10分ほど煮ます。']},
 {id:'m21',kind:'main',name:'高野豆腐の卵とじ',protein:'大豆',style:'和',time:15,cost:400,feature:null,
+ kcal:240,p:16,f:12,c:14,
  ings:[['高野豆腐',4,'個','大豆製品'],['卵',2,'個','卵・乳製品'],['干ししいたけ',2,'枚','乾物・缶詰']],
  prep:'高野豆腐としいたけは水で戻し、食べやすく切ります。',
  steps:['鍋に戻し汁とだし、しょうゆ・みりんで高野豆腐を煮含めます。','溶き卵を回しかけ、ふたをして卵が固まったら火を止めます。']},
 {id:'m22',kind:'main',name:'豆腐ステーキ きのこソース',protein:'大豆',style:'和',time:15,cost:450,feature:null,
+ kcal:210,p:11,f:12,c:10,
  ings:[['木綿豆腐',1,'丁','大豆製品'],['しめじ',1,'パック','野菜']],
  prep:'豆腐は水切りして4等分し、片栗粉をまぶします。しめじはほぐします。',
  steps:['フライパンで豆腐の全面をこんがり焼きます。','しめじを炒めてしょうゆ・みりん・バター少々で味つけし、豆腐にかけます。']},
 {id:'m23',easy:true,kind:'main',name:'白菜と鶏団子の鍋',protein:'肉',style:'和',time:25,cost:700,feature:'白菜',
  remake:'残りの汁は、翌朝の雑炊やうどんのだしに使うと最後までおいしく食べられます。',
+ kcal:260,p:21,f:12,c:12,
  ings:[['鶏ひき肉',250,'g','肉'],['白菜',0.25,'個','野菜'],['木綿豆腐',0.5,'丁','大豆製品'],['長ねぎ',1,'本','野菜']],
  prep:'ひき肉に塩・酒・片栗粉・すりおろし生姜を混ぜて団子のたねにします。白菜はざく切り、豆腐は一口大、ねぎは斜め切りにします。',
  steps:['鍋に水700mlと鶏がらスープの素を煮立て、団子を落とし入れます。','白菜、豆腐、ねぎを加えて煮ます。','塩としょうゆで味を調えます。']},
 {id:'m24',kind:'main',name:'鶏むね肉のチキン南蛮風',protein:'肉',style:'和',time:20,cost:570,feature:null,
+ kcal:430,p:26,f:26,c:18,
  ings:[['鶏むね肉',300,'g','肉'],['卵',1,'個','卵・乳製品'],['玉ねぎ',0.25,'個','野菜']],
  prep:'鶏肉はそぎ切りにして塩こしょうをし、小麦粉と溶き卵をくぐらせます。玉ねぎみじん切りとゆで卵でタルタル風ソースを作ります（卵1個はソース用にゆでます）。',
  steps:['フライパンで鶏肉を両面こんがり焼きます。','甘酢（酢・しょうゆ・砂糖）をさっとからめます。','タルタル風ソースをかけて出します。']},
 /* ================= 副菜 ================= */
 {id:'s01',kind:'side',name:'ほうれん草のおひたし',protein:'野菜',style:'和',time:10,cost:200,feature:null,
+ kcal:35,p:3,f:0,c:4,
  ings:[['ほうれん草',1,'束','野菜']],
  prep:'ほうれん草は根元をよく洗います。',
  steps:['塩ゆでして水に取り、水気をしぼって4cm長さに切ります。','だししょうゆをかけ、かつお節をのせます。']},
 {id:'s02',kind:'side',name:'白菜の浅漬け風サラダ',protein:'野菜',style:'和',time:5,cost:80,feature:'白菜',
+ kcal:30,p:1,f:1,c:4,
  ings:[['白菜',0.125,'個','野菜']],
  prep:'白菜は細切りにします。',
  steps:['塩少々でもんで水気をしぼります。','ごま油と塩昆布少々（あれば）で和えます。']},
 {id:'s03',kind:'side',name:'大根のゆず風味サラダ',protein:'野菜',style:'和',time:10,cost:110,feature:'大根',
+ kcal:30,p:1,f:0,c:6,
  ings:[['大根',5,'cm','野菜'],['かいわれ大根',0.5,'パック','野菜']],
  prep:'大根は千切りにします。',
  steps:['大根を塩でもんで水気を切ります。','ポン酢とごま油で和え、かいわれをのせます。']},
 {id:'s04',kind:'side',name:'きゅうりとわかめの酢の物',protein:'野菜',style:'和',time:10,cost:140,feature:null,
+ kcal:40,p:2,f:1,c:5,
  ings:[['きゅうり',1,'本','野菜'],['乾燥わかめ',3,'g','乾物・缶詰']],
  prep:'わかめは水で戻します。きゅうりは薄い輪切りにして塩でもみます。',
  steps:['きゅうりの水気をしぼり、わかめと合わせます。','酢・砂糖・しょうゆの甘酢で和えます。']},
 {id:'s05',kind:'side',name:'キャベツのコールスロー',protein:'野菜',style:'洋',time:10,cost:120,feature:'キャベツ',
+ kcal:90,p:3,f:5,c:7,
  ings:[['キャベツ',0.125,'個','野菜'],['にんじん',0.25,'本','野菜']],
  prep:'キャベツは千切り、にんじんは細切りにします。',
  steps:['塩でもんで水気をしぼります。','マヨネーズ、酢、砂糖少々で和えます。']},
 {id:'s06',kind:'side',name:'小松菜と油揚げの煮びたし',protein:'野菜',style:'和',time:10,cost:190,feature:null,
+ kcal:60,p:3,f:3,c:5,
  ings:[['小松菜',1,'束','野菜'],['油揚げ',1,'枚','大豆製品']],
  prep:'小松菜は4cm長さ、油揚げは短冊に切ります。',
  steps:['だし200mlにしょうゆ・みりんを加えて煮立てます。','油揚げと小松菜を入れて2〜3分煮ます。']},
 {id:'s07',kind:'side',name:'ブロッコリーのごま和え',protein:'野菜',style:'和',time:10,cost:180,feature:null,
+ kcal:110,p:1,f:9,c:6,
  ings:[['ブロッコリー',0.5,'株','野菜']],
  prep:'ブロッコリーは小房に分けます。',
  steps:['塩ゆでして水気を切ります。','すりごま、砂糖、しょうゆで和えます。']},
 {id:'s08',kind:'side',name:'なすの焼きびたし',protein:'野菜',style:'和',time:15,cost:160,feature:null,
+ kcal:90,p:1,f:4,c:12,
  ings:[['なす',2,'本','野菜']],
  prep:'なすは縦半分に切って皮に切り込みを入れます。',
  steps:['フライパンで両面を焼きます。','だししょうゆに浸して味をなじませます。']},
 {id:'s09',kind:'side',name:'かぼちゃの煮物',protein:'野菜',style:'和',time:15,cost:150,feature:null,
+ kcal:95,p:1,f:0,c:20,
  ings:[['かぼちゃ',0.125,'個','野菜']],
  prep:'かぼちゃは一口大に切ります。',
  steps:['鍋に水200ml、砂糖・しょうゆ・みりんを入れ、かぼちゃを並べます。','落としぶたをして弱火で12分ほど煮ます。']},
 {id:'s10',kind:'side',name:'ポテトサラダ',protein:'野菜',style:'洋',time:15,cost:180,feature:null,
+ kcal:55,p:1,f:3,c:5,
  ings:[['じゃがいも',2,'個','野菜'],['きゅうり',0.5,'本','野菜']],
  prep:'じゃがいもは皮をむいて一口大にし、きゅうりは薄切りにして塩でもみます。',
  steps:['じゃがいもをゆでて熱いうちに粗くつぶします。','きゅうりとマヨネーズ、塩こしょうで和えます。']},
 {id:'s11',kind:'side',name:'もやしのナムル',protein:'野菜',style:'和',time:5,cost:80,feature:null,
+ kcal:85,p:2,f:3,c:11,
  ings:[['もやし',1,'袋','野菜']],
  prep:'もやしは洗って水気を切ります。',
  steps:['熱湯で1分ゆでて、水気をしっかり切ります。','ごま油、塩、すりごまで和えます。']},
 {id:'s12',kind:'side',name:'白菜とツナのサラダ',protein:'野菜',style:'和',time:10,cost:220,feature:'白菜',
+ kcal:70,p:6,f:4,c:2,
  ings:[['白菜',0.125,'個','野菜'],['ツナ缶',1,'缶','乾物・缶詰']],
  prep:'白菜は細切りにします。',
  steps:['白菜を塩でもんで水気をしぼります。','ツナとポン酢、マヨネーズ少々で和えます。']},
 {id:'s13',kind:'side',name:'トマトと玉ねぎのマリネ',protein:'野菜',style:'洋',time:10,cost:150,feature:null,
+ kcal:160,p:2,f:10,c:14,
  ings:[['トマト',1,'個','野菜'],['玉ねぎ',0.25,'個','野菜']],
  prep:'玉ねぎは薄切りにして水にさらします。トマトは一口大に切ります。',
  steps:['玉ねぎの水気を切ってトマトと合わせます。','オリーブ油、酢、塩こしょうで和えて冷やします。']},
 {id:'s14',kind:'side',name:'切り干し大根の煮物',protein:'野菜',style:'和',time:15,cost:160,feature:'大根',
+ kcal:60,p:1,f:3,c:6,
  ings:[['切り干し大根',20,'g','乾物・缶詰'],['にんじん',0.25,'本','野菜'],['油揚げ',1,'枚','大豆製品']],
  prep:'切り干し大根は水で戻して絞ります。にんじんは千切り、油揚げは短冊にします。',
  steps:['鍋で油揚げと野菜を炒め、戻し汁とだしを加えます。','しょうゆ・砂糖・みりんで10分ほど煮ます。']},
 {id:'s15',kind:'side',name:'無限ピーマン',protein:'野菜',style:'和',time:10,cost:200,feature:null,
+ kcal:55,p:1,f:3,c:5,
  ings:[['ピーマン',3,'個','野菜'],['ツナ缶',1,'缶','乾物・缶詰']],
  prep:'ピーマンは細切りにします。',
  steps:['ピーマンとツナを耐熱容器に入れ、電子レンジで3分加熱します。','鶏がらスープの素とごま油で和えます。']},
 {id:'s16',kind:'side',name:'にんじんしりしり',protein:'野菜',style:'和',time:10,cost:140,feature:null,
+ kcal:45,p:2,f:2,c:4,
  ings:[['にんじん',1,'本','野菜'],['卵',1,'個','卵・乳製品']],
  prep:'にんじんは千切りにします。',
  steps:['フライパンでにんじんを炒め、しんなりしたら塩と酒で味つけします。','溶き卵を加えて手早く炒め合わせます。']},
 /* ================= 汁物 ================= */
 {id:'j01',kind:'soup',name:'豆腐とわかめの味噌汁',protein:'大豆',style:'和',time:10,cost:110,feature:null,
+ kcal:45,p:3,f:2,c:4,
  ings:[['木綿豆腐',0.5,'丁','大豆製品'],['乾燥わかめ',3,'g','乾物・缶詰']],
  prep:'豆腐はさいの目に切ります。わかめは水で戻します。',
  steps:['だし600mlを煮立て、豆腐とわかめを入れます。','火を止めて味噌大さじ2を溶き入れます。']},
 {id:'j02',kind:'soup',name:'白菜と油揚げの味噌汁',protein:'大豆',style:'和',time:10,cost:120,feature:'白菜',
+ kcal:60,p:3,f:3,c:5,
  ings:[['白菜',0.125,'個','野菜'],['油揚げ',1,'枚','大豆製品']],
  prep:'白菜は細切り、油揚げは短冊に切ります。',
  steps:['だし600mlで白菜と油揚げを煮ます。','火を止めて味噌大さじ2を溶き入れます。']},
 {id:'j03',kind:'soup',name:'大根とにんじんの味噌汁',protein:'野菜',style:'和',time:10,cost:90,feature:'大根',
+ kcal:40,p:1,f:1,c:6,
  ings:[['大根',3,'cm','野菜'],['にんじん',0.25,'本','野菜']],
  prep:'大根とにんじんはいちょう切りにします。',
  steps:['だし600mlで野菜がやわらかくなるまで煮ます。','火を止めて味噌大さじ2を溶き入れます。']},
 {id:'j04',kind:'soup',name:'玉ねぎと卵の味噌汁',protein:'卵',style:'和',time:10,cost:110,feature:null,
+ kcal:65,p:1,f:1,c:12,
  ings:[['玉ねぎ',0.5,'個','野菜'],['卵',1,'個','卵・乳製品']],
  prep:'玉ねぎは薄切りにします。卵は溶きほぐします。',
  steps:['だし600mlで玉ねぎを煮ます。','味噌を溶き入れてから溶き卵を流し入れ、ふんわりしたら火を止めます。']},
 {id:'j05',kind:'soup',name:'じゃがいもと玉ねぎの味噌汁',protein:'野菜',style:'和',time:10,cost:110,feature:null,
+ kcal:25,p:2,f:0,c:3,
  ings:[['じゃがいも',1,'個','野菜'],['玉ねぎ',0.5,'個','野菜']],
  prep:'じゃがいもは一口大、玉ねぎはくし形に切ります。',
  steps:['だし600mlで野菜を煮て、じゃがいもがやわらかくなったら火を止めます。','味噌大さじ2を溶き入れます。']},
 {id:'j06',kind:'soup',name:'なめこと豆腐の味噌汁',protein:'大豆',style:'和',time:10,cost:160,feature:null,
+ kcal:95,p:4,f:4,c:9,
  ings:[['なめこ',1,'袋','野菜'],['木綿豆腐',0.5,'丁','大豆製品']],
  prep:'なめこは洗って水気を切ります。豆腐はさいの目に切ります。',
  steps:['だし600mlを煮立て、なめこと豆腐を入れます。','火を止めて味噌大さじ2を溶き入れます。']},
 {id:'j07',kind:'soup',name:'キャベツとベーコンのスープ',protein:'肉',style:'洋',time:15,cost:180,feature:'キャベツ',
+ kcal:45,p:2,f:1,c:6,
  ings:[['キャベツ',0.125,'個','野菜'],['ベーコン',2,'枚','肉']],
  prep:'キャベツはざく切り、ベーコンは短冊に切ります。',
  steps:['鍋でベーコンを炒め、水600mlとコンソメを加えます。','キャベツを入れてやわらかくなるまで煮て、塩こしょうで調えます。']},
 {id:'j08',kind:'soup',name:'トマトと卵のスープ',protein:'卵',style:'洋',time:10,cost:150,feature:null,
+ kcal:80,p:3,f:2,c:12,
  ings:[['トマト',1,'個','野菜'],['卵',1,'個','卵・乳製品']],
  prep:'トマトはざく切りにします。卵は溶きほぐします。',
  steps:['水600mlとコンソメを煮立て、トマトを入れます。','溶き卵を流し入れて、水溶き片栗粉で軽くとろみをつけます。']},
 {id:'j09',kind:'soup',name:'根菜のけんちん汁風',protein:'野菜',style:'和',time:15,cost:150,feature:'大根',
+ kcal:70,p:2,f:2,c:10,
  ings:[['大根',3,'cm','野菜'],['にんじん',0.25,'本','野菜'],['こんにゃく',0.5,'枚','その他']],
  prep:'大根とにんじんはいちょう切り、こんにゃくは短冊にして下ゆでします。',
  steps:['ごま油で野菜とこんにゃくを炒め、だし600mlを加えます。','やわらかくなるまで煮て、しょうゆと塩で味を調えます。']}
@@ -590,11 +695,12 @@ function undecideDay(i){
 
 /* ---------- 描画 ---------- */
 function showTab(name){
-  ['week','shop','fridge','set'].forEach(t => {
+  ['week','shop','log','fridge','set'].forEach(t => {
     $('scr-' + t).classList.toggle('on', t === name);
     $('tab-' + t).classList.toggle('on', t === name);
   });
   if(name === 'shop') renderShop();
+  if(name === 'log') renderLog();
   if(name === 'fridge') renderFridge();
   window.scrollTo(0, 0);
 }
@@ -630,6 +736,7 @@ function renderWeek(){
     const mainD = byId[day.main];
     return '<div class="day"><h3>' + DAY_NAMES[i] + (plan.easyIdx === i ? ' <span class="badge reuse">手抜きの日</span>' : '') + '<span class="meta">約' + dayTime(day) + '分 ・ ' + dayCost(day).toLocaleString() + '円</span></h3>' +
       dishRow(i, 'main', '主菜', '') + dishRow(i, 'side', '副菜', 'side') + dishRow(i, 'soup', '汁物', 'soup') +
+      '<div class="kcal-line">🍚 1人分の目安：約' + ['main','side','soup'].reduce((a, sl) => a + byId[day[sl]].kcal, 0) + ' kcal</div>' +
       (mainD.remake ? '<div class="remake">▶ 翌日リメイク：' + mainD.remake + '</div>' : '') +
       '<div class="dayfoot"><button onclick="decideDay(' + i + ')">↻ この日を作り直す</button>' +
       '<button onclick="undecideDay(' + i + ')">未定にする</button></div></div>';
@@ -679,7 +786,7 @@ function showDish(id){
   const d = byId[id];
   tap();
   openModal('<h3>' + d.name + '</h3>' +
-    '<p class="note">約' + d.time + '分 ・ ' + dishCost(d) + '円（' + S.people + '人分） ・ ' + d.protein + ' ・ ' + d.style + '食</p>' +
+    '<p class="note">約' + d.time + '分 ・ ' + dishCost(d) + '円（' + S.people + '人分） ・ ' + d.protein + ' ・ ' + d.style + '食<br>カロリー目安（1人分）：約' + d.kcal + ' kcal（たんぱく質 ' + d.p + 'g ・ 脂質 ' + d.f + 'g ・ 炭水化物 ' + d.c + 'g）</p>' +
     '<h4>材料（' + S.people + '人分）</h4><ul>' +
     d.ings.map(([n, q, u]) => '<li>' + n + ' …… ' + fmtQty(q, u) + u + '</li>').join('') +
     '<li>調味料（しょうゆ・味噌・油など）…… 適量（常備品）</li></ul>' +
@@ -728,6 +835,139 @@ function toggleHome(n){
   try{ localStorage.setItem(HOME_KEY, JSON.stringify(homeIngs)); }catch(e){}
   renderHomeChips(); tap();
 }
+
+/* ---------- 食べたものの記録 ---------- */
+const LOG_KEY = 'kondate-log-v1';
+let foodLog = {};
+try{ foodLog = JSON.parse(localStorage.getItem(LOG_KEY)) || {}; }catch(e){}
+let pendingLogPhoto = null;
+function localStr(d){
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+let logDate = localStr(new Date());
+function saveLog(){
+  try{ localStorage.setItem(LOG_KEY, JSON.stringify(foodLog)); return true; }
+  catch(e){ return false; }
+}
+function logEntries(){ return foodLog[logDate] || []; }
+function fillDishSelect(){
+  const kinds = [['main','主菜'], ['side','副菜'], ['soup','汁物']];
+  $('logDishSel').innerHTML = kinds.map(([k, label]) =>
+    '<optgroup label="' + label + '">' + DISHES.filter(d => d.kind === k).map(d =>
+      '<option value="' + d.id + '">' + d.name + '（約' + d.kcal + ' kcal）</option>').join('') + '</optgroup>').join('');
+}
+function renderLog(){
+  const d = new Date(logDate + 'T00:00:00');
+  const wd = ['日','月','火','水','木','金','土'][d.getDay()];
+  $('logDateLabel').textContent = (d.getMonth() + 1) + '月' + d.getDate() + '日（' + wd + '）' + (logDate === localStr(new Date()) ? '・今日' : '');
+  const list = logEntries();
+  const tot = list.reduce((a, e) => ({kcal: a.kcal + e.kcal, p: a.p + (e.p || 0), f: a.f + (e.f || 0), c: a.c + (e.c || 0)}), {kcal: 0, p: 0, f: 0, c: 0});
+  $('logTotal').textContent = tot.kcal.toLocaleString();
+  $('logPfc').textContent = 'P ' + tot.p + 'g ・ F ' + tot.f + 'g ・ C ' + tot.c + 'g';
+  $('logList').innerHTML = list.length ? list.map(e =>
+    '<div class="log-item">' + (e.img ? '<img src="' + e.img + '" alt="">' : '') +
+    '<div class="li-body"><span class="li-kcal">' + e.name + '</span><br>' +
+    '<span class="li-kcal">' + e.kcal + ' kcal</span> <span class="li-pfc">P ' + (e.p || 0) + 'g ・ F ' + (e.f || 0) + 'g ・ C ' + (e.c || 0) + 'g</span></div>' +
+    '<button class="fi-del" onclick="deleteLog(' + e.id + ')">削除</button></div>').join('')
+    : '<p class="note">この日の記録はまだありません。</p>';
+  // 今日の献立ボタン：表示中の日が平日で、その曜日の献立が決まっている時だけ
+  const idx = (d.getDay() + 6) % 7;
+  $('logPlanBtn').style.display = (idx < 5 && plan.days[idx]) ? 'block' : 'none';
+  if(idx < 5 && plan.days[idx]) $('logPlanBtn').textContent = DAY_NAMES[idx] + 'の献立をまとめて記録';
+  // 最近7日
+  let rows = '';
+  for(let i = 0; i < 7; i++){
+    const dd = new Date(); dd.setDate(dd.getDate() - i);
+    const key = localStr(dd);
+    const t = (foodLog[key] || []).reduce((a, e) => a + e.kcal, 0);
+    rows += '<div class="row" style="display:flex; justify-content:space-between; font-size:13px; padding:3px 0;">' +
+      '<span>' + (dd.getMonth() + 1) + '月' + dd.getDate() + '日（' + ['日','月','火','水','木','金','土'][dd.getDay()] + '）' + (i === 0 ? '・今日' : '') + '</span>' +
+      '<span><b>' + t.toLocaleString() + ' kcal</b> <button class="navbtn" onclick="jumpLogDate(\'' + key + '\')">見る</button></span></div>';
+  }
+  $('logWeek').innerHTML = rows;
+}
+function jumpLogDate(key){ logDate = key; renderLog(); }
+function moveLogDate(n){
+  const d = new Date(logDate + 'T00:00:00');
+  d.setDate(d.getDate() + n);
+  logDate = localStr(d);
+  renderLog(); tap();
+}
+function pushLogEntry(e){
+  if(e.img){
+    const photoCount = Object.values(foodLog).flat().filter(x => x.img).length;
+    if(photoCount >= 12){ alert('写真つきの記録は最大12件までです。古いものを削除してから追加してください。'); return false; }
+  }
+  if(!foodLog[logDate]) foodLog[logDate] = [];
+  foodLog[logDate].push(e);
+  if(!saveLog()){
+    foodLog[logDate].pop();
+    if(e.img){ e.img = null; foodLog[logDate].push(e);
+      if(saveLog()){ alert('写真の保存容量がいっぱいのため、写真なしで記録しました。'); renderLog(); return true; }
+      foodLog[logDate].pop();
+    }
+    alert('保存できませんでした。容量がいっぱいのようです。');
+    return false;
+  }
+  return true;
+}
+function takePendingPhoto(){
+  const p = pendingLogPhoto;
+  pendingLogPhoto = null;
+  $('logPhotoState').textContent = '';
+  return p;
+}
+function addLogFromDish(){
+  const d = byId[$('logDishSel').value];
+  if(!d) return;
+  if(pushLogEntry({id: Date.now(), name: d.name, kcal: d.kcal, p: d.p, f: d.f, c: d.c, img: takePendingPhoto()})){
+    renderLog(); fanfare();
+  }
+}
+function addLogFromPlan(){
+  const d = new Date(logDate + 'T00:00:00');
+  const idx = (d.getDay() + 6) % 7;
+  const day = plan.days[idx];
+  if(!day) return;
+  [day.main, day.side, day.soup].forEach((id, i) => {
+    const dish = byId[id];
+    pushLogEntry({id: Date.now() + i, name: dish.name, kcal: dish.kcal, p: dish.p, f: dish.f, c: dish.c, img: null});
+  });
+  takePendingPhoto();
+  renderLog(); fanfare();
+}
+function addLogManual(){
+  const name = ($('logName').value || '').trim();
+  if(!name){ alert('名前を入力してください。'); return; }
+  const num = id => Math.max(0, parseInt($(id).value, 10) || 0);
+  if(pushLogEntry({id: Date.now(), name, kcal: num('logKcal'), p: num('logP'), f: num('logF'), c: num('logC'), img: takePendingPhoto()})){
+    $('logName').value = ''; $('logKcal').value = ''; $('logP').value = ''; $('logF').value = ''; $('logC').value = '';
+    renderLog(); fanfare();
+  }
+}
+function deleteLog(id){
+  foodLog[logDate] = logEntries().filter(e => e.id !== id);
+  saveLog(); renderLog(); tap();
+}
+$('logPhoto').addEventListener('change', ev => {
+  const f = ev.target.files && ev.target.files[0];
+  ev.target.value = '';
+  if(!f) return;
+  const img = new Image();
+  img.onload = () => {
+    const max = 480;
+    const sc = Math.min(1, max / Math.max(img.width, img.height));
+    const cv = document.createElement('canvas');
+    cv.width = Math.round(img.width * sc); cv.height = Math.round(img.height * sc);
+    cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+    URL.revokeObjectURL(img.src);
+    pendingLogPhoto = cv.toDataURL('image/jpeg', 0.72);
+    $('logPhotoState').textContent = '写真を添付しました（次の1件の記録に付きます）。';
+    tap();
+  };
+  img.onerror = () => alert('写真を読み込めませんでした。');
+  img.src = URL.createObjectURL(f);
+});
 
 /* ---------- 冷蔵庫の在庫（写真登録） ---------- */
 const FRIDGE_KEY = 'kondate-fridge-v1';
@@ -877,6 +1117,7 @@ function confettiBurst(){
 /* ---------- 起動 ---------- */
 fillSettings();
 renderHomeChips();
+fillDishSelect();
 renderFridge();
 renderAll();
 </script>
